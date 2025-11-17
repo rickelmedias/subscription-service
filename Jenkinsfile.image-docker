@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17'
+    }
+    
+    environment {
+        DOCKER_IMAGE = 'rickelmedias/subscription-service'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '🔄 Clonando repositório...'
+                checkout scm
+            }
+        }
+        
+        stage('Build JAR') {
+            steps {
+                echo '🔨 Compilando e empacotando aplicação...'
+                sh 'mvn clean package -DskipTests'
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo '🐳 Construindo imagem Docker...'
+                    sh """
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+                    """
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    echo '📤 Enviando imagem para Docker Hub...'
+                    // Nota: Configure as credenciais do Docker Hub no Jenkins
+                    // Credentials ID: 'docker-hub-credentials'
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh """
+                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
+                            docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                            docker push ${DOCKER_IMAGE}:latest
+                        """
+                    }
+                    echo '✅ Imagem Docker enviada com sucesso!'
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '🧹 Limpando...'
+        }
+        success {
+            echo '✅ Pipeline IMAGE_DOCKER executado com SUCESSO!'
+            echo "📦 Imagem: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+        }
+        failure {
+            echo '❌ Pipeline IMAGE_DOCKER FALHOU!'
+        }
+    }
+}
+

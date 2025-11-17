@@ -1,0 +1,86 @@
+package com.example.subscription.domain.valueobject;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import static org.assertj.core.api.Assertions.*;
+
+@DisplayName("CourseAverage Value Object Tests")
+class CourseAverageTest {
+
+    @Test
+    @DisplayName("Should create average with valid value")
+    void shouldCreateAverageWithValidValue() {
+        CourseAverage average = CourseAverage.of(8.5);
+        assertThat(average.getValue()).isEqualTo(8.5);
+    }
+
+    @ParameterizedTest
+    @ValueSource(doubles = {-0.1, -1.0, 10.1, 11.0, 100.0})
+    @DisplayName("Should throw exception for invalid averages")
+    void shouldThrowExceptionForInvalidAverages(double invalidValue) {
+        assertThatThrownBy(() -> CourseAverage.of(invalidValue))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Average must be a value between 0.0 and 10.0.");
+    }
+
+    @Test
+    @DisplayName("Should check if average is above threshold")
+    void shouldCheckIfAverageIsAboveThreshold() {
+        CourseAverage average = CourseAverage.of(8.0);
+        
+        assertThat(average.isAbove(7.0)).isTrue();
+        assertThat(average.isAbove(8.0)).isFalse(); // Não é maior que 8.0
+        assertThat(average.isAbove(9.0)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should check if average is below threshold")
+    void shouldCheckIfAverageIsBelowThreshold() {
+        CourseAverage average = CourseAverage.of(6.5);
+        
+        assertThat(average.isBelow(7.0)).isTrue();
+        assertThat(average.isBelow(6.5)).isFalse();
+        assertThat(average.isBelow(6.0)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should identify performance levels")
+    void shouldIdentifyPerformanceLevels() {
+        assertThat(CourseAverage.of(9.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+        
+        assertThat(CourseAverage.of(8.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+        
+        assertThat(CourseAverage.of(7.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+        
+        assertThat(CourseAverage.of(6.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+        
+        assertThat(CourseAverage.of(5.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+    }
+
+    @Test
+    @DisplayName("Should round to two decimals")
+    void shouldRoundToTwoDecimals() {
+        CourseAverage average = CourseAverage.of(8.456);
+        assertThat(average.getValue()).isEqualTo(8.46);
+    }
+
+    @Test
+    @DisplayName("Should be comparable")
+    void shouldBeComparable() {
+        CourseAverage avg1 = CourseAverage.of(7.5);
+        CourseAverage avg2 = CourseAverage.of(8.5);
+        CourseAverage avg3 = CourseAverage.of(7.5);
+        
+        assertThat(avg1.compareTo(avg2)).isNegative();
+        assertThat(avg2.compareTo(avg1)).isPositive();
+        assertThat(avg1.compareTo(avg3)).isZero();
+    }
+}

@@ -1,0 +1,44 @@
+version: '4'
+
+services:
+  database:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: papi
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    image: rickelmedias/subscription-service:latest
+    networks:
+      - default
+    environment:
+      DB_HOST: database
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "8585:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  db-volume:
+
+networks:
+  default:
+    driver: bridge
+

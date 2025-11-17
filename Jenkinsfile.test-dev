@@ -1,0 +1,109 @@
+pipeline {
+    agent any
+    
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17'
+    }
+    
+    environment {
+        QUALITY_GATE_THRESHOLD = 0.99
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '🔄 Clonando repositório...'
+                checkout scm
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo '🔨 Compilando aplicação...'
+                sh 'mvn clean compile'
+            }
+        }
+        
+        stage('Unit Tests') {
+            steps {
+                echo '🧪 Executando testes unitários...'
+                sh 'mvn test'
+            }
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml'
+                    archiveArtifacts artifacts: '**/target/surefire-reports/**', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Code Analysis - PMD') {
+            steps {
+                echo '🔍 Análise estática de código (PMD)...'
+                sh 'mvn pmd:pmd'
+            }
+            post {
+                always {
+                    recordIssues(
+                        enabledForFailure: true,
+                        tools: [pmdParser(pattern: '**/target/pmd.xml')]
+                    )
+                    archiveArtifacts artifacts: '**/target/pmd.xml', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Code Coverage - JaCoCo') {
+            steps {
+                echo '📊 Gerando relatório de cobertura...'
+                sh 'mvn jacoco:report jacoco:check'
+            }
+            post {
+                always {
+                    jacoco(
+                        execPattern: '**/target/jacoco.exec',
+                        classPattern: '**/target/classes',
+                        sourcePattern: '**/src/main/java',
+                        inclusionPattern: '**/*.class',
+                        exclusionPattern: '**/dto/**,**/config/**,**/SubscriptionApplication.class'
+                    )
+                    archiveArtifacts artifacts: '**/target/site/jacoco/**', fingerprint: true
+                }
+            }
+        }
+        
+        stage('Quality Gate') {
+            steps {
+                script {
+                    echo '🎯 Verificando Quality Gate (99% de cobertura)...'
+                    try {
+                        sh 'mvn jacoco:check'
+                        echo "✅ Quality Gate PASSOU! Cobertura >= 99%"
+                        env.QUALITY_GATE_PASSED = 'true'
+                    } catch (Exception e) {
+                        echo "❌ Quality Gate FALHOU! Cobertura abaixo de 99%"
+                        env.QUALITY_GATE_PASSED = 'false'
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '📋 Relatórios gerados:'
+            echo '  - JUnit: target/surefire-reports/'
+            echo '  - PMD: target/pmd.xml'
+            echo '  - JaCoCo: target/site/jacoco/'
+        }
+        success {
+            echo '✅ Pipeline TEST-DEV executado com SUCESSO!'
+        }
+        failure {
+            echo '❌ Pipeline TEST-DEV FALHOU!'
+        }
+    }
+}
+
