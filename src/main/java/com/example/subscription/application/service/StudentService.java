@@ -2,7 +2,6 @@ package com.example.subscription.application.service;
 
 import com.example.subscription.application.dto.StudentDTO;
 import com.example.subscription.infrastructure.repository.StudentRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,7 +20,6 @@ import java.util.stream.Collectors;
  * Rickelme
  */
 @Service
-@Slf4j
 public class StudentService {
 
     private final StudentRepository studentRepository;
@@ -38,8 +36,6 @@ public class StudentService {
      */
     @Transactional(readOnly = true)
     public List<StudentDTO> getAllStudents() {
-        log.debug("Fetching all students");
-        
         return studentRepository.findAll()
                 .stream()
                 .map(StudentDTO::fromEntity)
@@ -55,8 +51,6 @@ public class StudentService {
      */
     @Transactional(readOnly = true)
     public StudentDTO getStudentById(Long id) {
-        log.debug("Fetching student with ID: {}", id);
-        
         return studentRepository.findById(id)
                 .map(StudentDTO::fromEntity)
                 .orElseThrow(() -> new NoSuchElementException("Student not found: " + id));

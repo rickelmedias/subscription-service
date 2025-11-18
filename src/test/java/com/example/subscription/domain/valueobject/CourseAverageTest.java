@@ -83,4 +83,47 @@ class CourseAverageTest {
         assertThat(avg2.compareTo(avg1)).isPositive();
         assertThat(avg1.compareTo(avg3)).isZero();
     }
+
+    @Test
+    @DisplayName("Should check if average is exactly equal to threshold")
+    void shouldCheckIfAverageIsExactlyEqualToThreshold() {
+        CourseAverage average = CourseAverage.of(7.0);
+        
+        assertThat(average.isExactly(7.0)).isTrue();
+        assertThat(average.isExactly(7.1)).isFalse();
+        assertThat(average.isExactly(6.9)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should return formatted string representation")
+    void shouldReturnFormattedStringRepresentation() {
+        CourseAverage average = CourseAverage.of(8.456);
+        assertThat(average.toString()).isEqualTo("8.46");
+        
+        CourseAverage average2 = CourseAverage.of(7.0);
+        assertThat(average2.toString()).isEqualTo("7.00");
+    }
+
+    @Test
+    @DisplayName("Should test all performance level boundaries")
+    void shouldTestAllPerformanceLevelBoundaries() {
+        // Test boundaries
+        assertThat(CourseAverage.of(9.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+        
+        assertThat(CourseAverage.of(8.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+        
+        assertThat(CourseAverage.of(7.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+        
+        assertThat(CourseAverage.of(7.01).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+        
+        assertThat(CourseAverage.of(6.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+        
+        assertThat(CourseAverage.of(5.99).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+    }
 }

@@ -35,11 +35,7 @@ public class CreditStrategyFactory {
      * Retorna a estratégia baseada no tipo
      */
     public CreditCalculationStrategy getStrategy(StrategyType type) {
-        CreditCalculationStrategy strategy = strategies.get(type.name());
-        if (strategy == null) {
-            throw new IllegalArgumentException("Unknown strategy type: " + type);
-        }
-        return strategy;
+        return strategies.get(type.name());
     }
     
     /**

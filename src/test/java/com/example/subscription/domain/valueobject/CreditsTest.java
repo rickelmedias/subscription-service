@@ -82,4 +82,21 @@ class CreditsTest {
         assertThat(credits1).isEqualTo(credits2);
         assertThat(credits1.hashCode()).isEqualTo(credits2.hashCode());
     }
+
+    @Test
+    @DisplayName("Should return formatted string representation")
+    void shouldReturnFormattedStringRepresentation() {
+        Credits credits = Credits.of(10);
+        assertThat(credits.toString()).isEqualTo("10 credits");
+        
+        Credits zeroCredits = Credits.zero();
+        assertThat(zeroCredits.toString()).isEqualTo("0 credits");
+    }
+
+    @Test
+    @DisplayName("Should check if isEmpty for non-zero credits")
+    void shouldCheckIfIsEmptyForNonZeroCredits() {
+        Credits credits = Credits.of(5);
+        assertThat(credits.isEmpty()).isFalse();
+    }
 }
