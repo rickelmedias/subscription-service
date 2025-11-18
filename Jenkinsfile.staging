@@ -2,45 +2,64 @@ pipeline {
     agent any
     
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
+                // Clona o repositório e o Jenkinsfile
                 checkout scm
             }
         }
         
-        stage('Start container') {
+        stage('Start Container') {
             steps {
                 echo 'Starting container from Docker Hub...'
-                sh 'docker-compose -f docker-compose.staging.yml pull' // Baixa a imagem do Docker Hub
-                sh 'docker-compose -f docker-compose.staging.yml up -d --no-color'
-                sleep time: 60, unit: 'SECONDS' // Aumenta o tempo para o serviço Spring Boot iniciar
-                sh 'docker-compose -f docker-compose.staging.yml logs' // Verifica os logs para conferir o status do Spring Boot
-                sh 'docker-compose -f docker-compose.staging.yml ps' // Verifica o status do container
+                // 1. Baixa a imagem (garantindo que seja a mais recente)
+                sh 'docker compose -f docker-compose.staging.yml pull' 
+                
+                // 2. Sobe os containers em modo detached (-d)
+                sh 'docker compose -f docker-compose.staging.yml up -d --no-color'
+                
+                echo 'Waiting for service to become healthy...'
+                // 3. Espera o serviço subir (máx. 5 minutos)
+                script {
+                    timeout(time: 5, unit: 'MINUTES') { 
+                        waitUntil {
+                            // Tenta a health check a cada 10 segundos. O curl -f retorna 0 em sucesso (código 2xx), ou != 0 em falha (conexão recusada ou código HTTP 4xx/5xx).
+                            sh(script: 'curl -f http://localhost:8686/actuator/health', returnStatus: true) == 0
+                        }
+                    }
+                    echo "✅ Service is responding and ready for tests!"
+                }
             }
         }
         
-        stage('Run tests against the container') {
+        stage('Run Tests Against Container') {
             steps {
-                script {
-                    def response = sh(
-                        script: 'curl -f http://localhost:8686/actuator/health || echo "Service not responding"',
-                        returnStatus: true
-                    )
-                    if (response != 0) {
-                        echo "⚠️ Service not responding, but continuing..."
-                    } else {
-                        echo "✅ Service is responding!"
-                    }
-                }
+                echo 'Executing tests against the running container...'
+                // AQUI VOCÊ ADICIONARIA SEUS COMANDOS DE TESTE REAIS
+                
+                // Exemplo de teste simples que confirma o status
+                sh 'curl http://localhost:8686/actuator/health' 
+            }
+        }
+        
+        stage('Verification Logs') {
+            steps {
+                // Logs para verificação e depuração
+                sh 'docker compose -f docker-compose.staging.yml ps'
+                sh 'docker compose -f docker-compose.staging.yml logs'
             }
         }
     }
     
+    // Ações que sempre serão executadas, independentemente do sucesso ou falha das etapas.
     post {
         always {
-            echo 'Pipeline completed'
-            // Não derruba mais o container aqui
+            echo 'Pipeline completed. Cleaning up resources...'
+            // Opcional: Derrubar o ambiente. Descomente se o ambiente for temporário.
+            // sh 'docker compose -f docker-compose.staging.yml down'
+        }
+        failure {
+            echo "Pipeline failed. Review logs for errors."
         }
     }
 }
-
