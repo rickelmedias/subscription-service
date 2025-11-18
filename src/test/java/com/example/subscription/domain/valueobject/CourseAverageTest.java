@@ -1,6 +1,7 @@
 package com.example.subscription.domain.valueobject;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -196,5 +197,156 @@ class CourseAverageTest {
         assertThat(CourseAverage.of(7.0).getValue()).isEqualTo(7.0);
         assertThat(CourseAverage.of(10.0).getValue()).isEqualTo(10.0);
         assertThat(CourseAverage.of(0.0).getValue()).isEqualTo(0.0);
+    }
+
+    @Nested
+    @DisplayName("PerformanceLevel Enum Tests")
+    class PerformanceLevelTests {
+
+        @Test
+        @DisplayName("Should return EXCELLENT for values >= 9.0")
+        void shouldReturnExcellentForHighValues() {
+            assertThat(CourseAverage.PerformanceLevel.fromValue(9.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(9.5))
+                    .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(10.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+        }
+
+        @Test
+        @DisplayName("Should return VERY_GOOD for values >= 8.0 and < 9.0")
+        void shouldReturnVeryGoodForGoodValues() {
+            assertThat(CourseAverage.PerformanceLevel.fromValue(8.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(8.5))
+                    .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(8.99))
+                    .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+        }
+
+        @Test
+        @DisplayName("Should return GOOD for values > 7.0 and < 8.0")
+        void shouldReturnGoodForAcceptableValues() {
+            assertThat(CourseAverage.PerformanceLevel.fromValue(7.01))
+                    .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(7.5))
+                    .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(7.99))
+                    .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+        }
+
+        @Test
+        @DisplayName("Should return AVERAGE for values >= 6.0 and <= 7.0")
+        void shouldReturnAverageForMediumValues() {
+            assertThat(CourseAverage.PerformanceLevel.fromValue(6.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(6.5))
+                    .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(7.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+        }
+
+        @Test
+        @DisplayName("Should return BELOW_AVERAGE for values < 6.0")
+        void shouldReturnBelowAverageForLowValues() {
+            assertThat(CourseAverage.PerformanceLevel.fromValue(0.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(3.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(5.99))
+                    .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+        }
+
+        @Test
+        @DisplayName("Should test exact boundary values for all levels")
+        void shouldTestExactBoundaryValues() {
+            // Teste exato dos limiares
+            assertThat(CourseAverage.PerformanceLevel.fromValue(9.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(8.99999))
+                    .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(8.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(7.99999))
+                    .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(7.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+            
+            // CORREÇÃO AQUI: 
+            // 6.99999 ainda é >= 6.0, então é AVERAGE.
+            // Para ser BELOW_AVERAGE, deve ser < 6.0 (ex: 5.99999).
+            assertThat(CourseAverage.PerformanceLevel.fromValue(5.99999)) 
+                    .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+            
+            assertThat(CourseAverage.PerformanceLevel.fromValue(6.0))
+                    .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+        }
+
+        @Test
+        @DisplayName("Should verify enum values exist")
+        void shouldVerifyEnumValuesExist() {
+            assertThat(CourseAverage.PerformanceLevel.values())
+                    .hasSize(5)
+                    .contains(
+                    CourseAverage.PerformanceLevel.EXCELLENT,
+                    CourseAverage.PerformanceLevel.VERY_GOOD,
+                    CourseAverage.PerformanceLevel.GOOD,
+                    CourseAverage.PerformanceLevel.AVERAGE,
+                    CourseAverage.PerformanceLevel.BELOW_AVERAGE
+                    );
+        }
+
+        @Test
+        @DisplayName("Should convert enum to string")
+        void shouldConvertEnumToString() {
+            assertThat(CourseAverage.PerformanceLevel.EXCELLENT.toString())
+                    .isEqualTo("EXCELLENT");
+            
+            assertThat(CourseAverage.PerformanceLevel.VERY_GOOD.toString())
+                    .isEqualTo("VERY_GOOD");
+            
+            assertThat(CourseAverage.PerformanceLevel.GOOD.toString())
+                    .isEqualTo("GOOD");
+            
+            assertThat(CourseAverage.PerformanceLevel.AVERAGE.toString())
+                    .isEqualTo("AVERAGE");
+            
+            assertThat(CourseAverage.PerformanceLevel.BELOW_AVERAGE.toString())
+                    .isEqualTo("BELOW_AVERAGE");
+        }
+
+        @Test
+        @DisplayName("Should get enum by valueOf")
+        void shouldGetEnumByValueOf() {
+            assertThat(CourseAverage.PerformanceLevel.valueOf("EXCELLENT"))
+                    .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+            
+            assertThat(CourseAverage.PerformanceLevel.valueOf("VERY_GOOD"))
+                    .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.valueOf("GOOD"))
+                    .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+            
+            assertThat(CourseAverage.PerformanceLevel.valueOf("AVERAGE"))
+                    .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+            
+            assertThat(CourseAverage.PerformanceLevel.valueOf("BELOW_AVERAGE"))
+                    .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+        }
     }
 }

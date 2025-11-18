@@ -144,12 +144,9 @@
                         <exclude>**/SubscriptionApplication.class</exclude>
                         <exclude>**/config/**</exclude>
                         <exclude>**/dto/**</exclude>
-                        <exclude>**/exception/**</exclude>
                         <exclude>**/bdd/**</exclude>
                         <exclude>**/presentation/controller/GlobalExceptionHandler.class</exclude>
                         <exclude>**/domain/strategy/CreditStrategyFactory$StrategyType.class</exclude>
-                        <exclude>**/domain/valueobject/CourseAverage$PerformanceLevel.class</exclude>
-                        <exclude>**/domain/constant/BusinessRules.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

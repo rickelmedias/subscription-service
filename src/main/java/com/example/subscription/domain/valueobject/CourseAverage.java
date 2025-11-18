@@ -13,8 +13,6 @@ import java.math.RoundingMode;
 /**
  * Value Object que representa a média de um curso.
  * Encapsula validações e comportamentos relacionados à média.
- * 
- * Rickelme
  */
 @Embeddable
 @Getter
@@ -118,7 +116,6 @@ public class CourseAverage implements Serializable, Comparable<CourseAverage> {
         
         /**
          * Retorna o nível de performance baseado no valor da média.
-         * Reduz complexidade ciclomática usando array indexado.
          */
         public static PerformanceLevel fromValue(double value) {
             int index = findPerformanceIndex(value);
@@ -127,7 +124,6 @@ public class CourseAverage implements Serializable, Comparable<CourseAverage> {
         
         /**
          * Encontra o índice do nível de performance usando comparações ordenadas.
-         * Reduz complexidade ciclomática ao mínimo necessário.
          */
         private static int findPerformanceIndex(double value) {
             if (value >= 9.0) return 0; // EXCELLENT
