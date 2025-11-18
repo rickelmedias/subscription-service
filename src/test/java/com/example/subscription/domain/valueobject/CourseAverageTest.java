@@ -116,6 +116,28 @@ class CourseAverageTest {
     }
 
     @Test
+    @DisplayName("Should implement equals correctly")
+    void shouldImplementEqualsCorrectly() {
+        CourseAverage avg1 = CourseAverage.of(7.5);
+        CourseAverage avg2 = CourseAverage.of(7.5);
+        CourseAverage avg3 = CourseAverage.of(8.0);
+        
+        assertThat(avg1).isEqualTo(avg2);
+        assertThat(avg1).isNotEqualTo(avg3);
+        assertThat(avg1).isNotEqualTo(null);
+        assertThat(avg1).isEqualTo(avg1);
+    }
+
+    @Test
+    @DisplayName("Should implement hashCode correctly")
+    void shouldImplementHashCodeCorrectly() {
+        CourseAverage avg1 = CourseAverage.of(7.5);
+        CourseAverage avg2 = CourseAverage.of(7.5);
+        
+        assertThat(avg1.hashCode()).isEqualTo(avg2.hashCode());
+    }
+
+    @Test
     @DisplayName("Should test all performance level boundaries")
     void shouldTestAllPerformanceLevelBoundaries() {
         assertThat(CourseAverage.of(9.0).getPerformanceLevel())

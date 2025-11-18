@@ -2,13 +2,13 @@ package com.example.subscription.domain.valueobject;
 
 import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 
 /**
  * Value Object que representa a média de um curso.
@@ -16,7 +16,6 @@ import java.math.RoundingMode;
  */
 @Embeddable
 @Getter
-@EqualsAndHashCode
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CourseAverage implements Serializable, Comparable<CourseAverage> {
 
@@ -97,33 +96,44 @@ public class CourseAverage implements Serializable, Comparable<CourseAverage> {
         return String.format("%." + SCALE + "f", value);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CourseAverage)) return false;
+        CourseAverage that = (CourseAverage) o;
+        return Double.compare(that.value, value) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
+    }
+
     /**
      * Enum para nível de performance
      */
     public enum PerformanceLevel {
-        EXCELLENT,
-        VERY_GOOD,
-        GOOD,
-        AVERAGE,
-        BELOW_AVERAGE;
+        EXCELLENT(9.0),
+        VERY_GOOD(8.0),
+        GOOD(7.0),
+        AVERAGE(6.0),
+        BELOW_AVERAGE(0.0);
+
+        private final double minThreshold;
+
+        PerformanceLevel(double minThreshold) {
+            this.minThreshold = minThreshold;
+        }
 
         /**
          * Retorna o nível de performance baseado no valor da média.
-         * Complexidade reduzida usando if-else encadeado.
+         * Complexidade mínima usando estrutura simples.
          */
         public static PerformanceLevel fromValue(double value) {
-            if (value >= 9.0) {
-                return EXCELLENT;
-            }
-            if (value >= 8.0) {
-                return VERY_GOOD;
-            }
-            if (value > 7.0) {
-                return GOOD;
-            }
-            if (value >= 6.0) {
-                return AVERAGE;
-            }
+            if (value >= 9.0) return EXCELLENT;
+            if (value >= 8.0) return VERY_GOOD;
+            if (value > 7.0) return GOOD;
+            if (value >= 6.0) return AVERAGE;
             return BELOW_AVERAGE;
         }
     }
