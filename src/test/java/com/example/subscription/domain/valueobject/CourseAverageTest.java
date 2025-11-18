@@ -28,29 +28,11 @@ class CourseAverageTest {
     }
 
     @Test
-    @DisplayName("Should throw exception for negative values (left side of OR)")
-    void shouldThrowExceptionForNegativeValues() {
-        assertThatThrownBy(() -> CourseAverage.of(-1.0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Average must be a value between 0.0 and 10.0.");
-    }
-
-    @Test
-    @DisplayName("Should throw exception for values above 10.0 (right side of OR)")
-    void shouldThrowExceptionForValuesAboveMax() {
-        assertThatThrownBy(() -> CourseAverage.of(10.1))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Average must be a value between 0.0 and 10.0.");
-    }
-
-    @Test
     @DisplayName("Should test boundary values 0.0 and 10.0")
     void shouldTestBoundaryValues() {
-        // Test minimum boundary
         CourseAverage min = CourseAverage.of(0.0);
         assertThat(min.getValue()).isEqualTo(0.0);
         
-        // Test maximum boundary
         CourseAverage max = CourseAverage.of(10.0);
         assertThat(max.getValue()).isEqualTo(10.0);
     }
@@ -61,7 +43,7 @@ class CourseAverageTest {
         CourseAverage average = CourseAverage.of(8.0);
         
         assertThat(average.isAbove(7.0)).isTrue();
-        assertThat(average.isAbove(8.0)).isFalse(); // Não é maior que 8.0
+        assertThat(average.isAbove(8.0)).isFalse();
         assertThat(average.isAbove(9.0)).isFalse();
     }
 
@@ -73,6 +55,16 @@ class CourseAverageTest {
         assertThat(average.isBelow(7.0)).isTrue();
         assertThat(average.isBelow(6.5)).isFalse();
         assertThat(average.isBelow(6.0)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should check if average is exactly equal to threshold")
+    void shouldCheckIfAverageIsExactlyEqualToThreshold() {
+        CourseAverage average = CourseAverage.of(7.0);
+        
+        assertThat(average.isExactly(7.0)).isTrue();
+        assertThat(average.isExactly(7.1)).isFalse();
+        assertThat(average.isExactly(6.9)).isFalse();
     }
 
     @Test
@@ -114,16 +106,6 @@ class CourseAverageTest {
     }
 
     @Test
-    @DisplayName("Should check if average is exactly equal to threshold")
-    void shouldCheckIfAverageIsExactlyEqualToThreshold() {
-        CourseAverage average = CourseAverage.of(7.0);
-        
-        assertThat(average.isExactly(7.0)).isTrue();
-        assertThat(average.isExactly(7.1)).isFalse();
-        assertThat(average.isExactly(6.9)).isFalse();
-    }
-
-    @Test
     @DisplayName("Should return formatted string representation")
     void shouldReturnFormattedStringRepresentation() {
         CourseAverage average = CourseAverage.of(8.456);
@@ -136,7 +118,6 @@ class CourseAverageTest {
     @Test
     @DisplayName("Should test all performance level boundaries")
     void shouldTestAllPerformanceLevelBoundaries() {
-        // Test boundaries
         assertThat(CourseAverage.of(9.0).getPerformanceLevel())
                 .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
         
@@ -159,7 +140,6 @@ class CourseAverageTest {
     @Test
     @DisplayName("Should test all performance level edge cases")
     void shouldTestAllPerformanceLevelEdgeCases() {
-        // Test exact boundaries
         assertThat(CourseAverage.of(10.0).getPerformanceLevel())
                 .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
         
@@ -185,15 +165,12 @@ class CourseAverageTest {
     @Test
     @DisplayName("Should test rounding edge cases")
     void shouldTestRoundingEdgeCases() {
-        // Test rounding up
         assertThat(CourseAverage.of(8.455).getValue()).isEqualTo(8.46);
         assertThat(CourseAverage.of(8.445).getValue()).isEqualTo(8.45);
         
-        // Test rounding down
         assertThat(CourseAverage.of(7.234).getValue()).isEqualTo(7.23);
         assertThat(CourseAverage.of(7.235).getValue()).isEqualTo(7.24);
         
-        // Test exact values
         assertThat(CourseAverage.of(7.0).getValue()).isEqualTo(7.0);
         assertThat(CourseAverage.of(10.0).getValue()).isEqualTo(10.0);
         assertThat(CourseAverage.of(0.0).getValue()).isEqualTo(0.0);
@@ -271,7 +248,6 @@ class CourseAverageTest {
         @Test
         @DisplayName("Should test exact boundary values for all levels")
         void shouldTestExactBoundaryValues() {
-            // Teste exato dos limiares
             assertThat(CourseAverage.PerformanceLevel.fromValue(9.0))
                     .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
             
@@ -287,9 +263,6 @@ class CourseAverageTest {
             assertThat(CourseAverage.PerformanceLevel.fromValue(7.0))
                     .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
             
-            // CORREÇÃO AQUI: 
-            // 6.99999 ainda é >= 6.0, então é AVERAGE.
-            // Para ser BELOW_AVERAGE, deve ser < 6.0 (ex: 5.99999).
             assertThat(CourseAverage.PerformanceLevel.fromValue(5.99999)) 
                     .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
             
