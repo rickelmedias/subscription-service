@@ -2,66 +2,70 @@ pipeline {
     agent any
     
     tools {
+        // Assume que estas ferramentas estão configuradas
         maven 'Maven-3.9'
         jdk 'JDK-17'
     }
     
+    // VARIÁVEIS DE AMBIENTE
     environment {
         DOCKER_IMAGE = 'rickelmedias/subscription-service'
         DOCKER_TAG = "${BUILD_NUMBER}"
-        QUALITY_GATE_THRESHOLD = 0.99
+        // A tag 0.99 é mais clara aqui, mas o Jacoco check usa o pom.xml
+        QUALITY_GATE_THRESHOLD = '0.99' 
     }
     
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
-                echo '🔄 Clonando repositório...'
+                echo '🔄 Clonando repositório e verificando a branch...'
                 checkout scm
             }
         }
         
-        stage('Build') {
+        stage('Build & Test') {
             steps {
-                echo '🔨 Compilando aplicação...'
-                sh 'mvn clean compile'
-            }
-        }
-        
-        stage('Unit Tests') {
-            steps {
-                echo '🧪 Executando testes unitários...'
-                sh 'mvn test'
+                echo '🔨 Compilando, executando Testes Unitários e gerando relatórios JaCoCo...'
+                // Usa 'test' para garantir compilação, testes e geração do jacoco.exec.
+                sh 'mvn clean install'
             }
             post {
+                // Publicação dos relatórios JUnit
                 always {
                     junit '**/target/surefire-reports/*.xml'
-                    archiveArtifacts artifacts: '**/target/surefire-reports/**', fingerprint: true
                 }
             }
         }
         
-        stage('Code Analysis - PMD') {
+        stage('Code Analysis (PMD)') {
             steps {
-                echo '🔍 Análise estática de código (PMD)...'
-                sh 'mvn pmd:pmd'
+                echo '🔍 Executando Análise Estática de Código (PMD)...'
+                // O pmd:check é mais rigoroso e falha o build em caso de violações
+                sh 'mvn pmd:pmd pmd:check' 
             }
             post {
+                // Publicação do relatório PMD
                 always {
                     recordIssues(
                         enabledForFailure: true,
                         tools: [pmdParser(pattern: '**/target/pmd.xml')]
                     )
-                    archiveArtifacts artifacts: '**/target/pmd.xml', fingerprint: true
                 }
             }
         }
         
-        stage('Code Coverage - JaCoCo') {
+        stage('Coverage & Quality Gate') {
             steps {
-                echo '📊 Gerando relatório de cobertura...'
-                sh 'mvn jacoco:report'
+                echo "📊 Verificando Cobertura de Código e aplicando Quality Gate (Min: ${env.QUALITY_GATE_THRESHOLD})..."
+                
+                // O jacoco:check usa as regras configuradas no pom.xml e falha o pipeline se a cobertura for baixa.
+                sh 'mvn jacoco:report jacoco:check'
+                
+                // Se o comando acima for bem-sucedido, o gate PASSOU.
+                echo "✅ Quality Gate PASSOU! Cobertura mínima atingida."
             }
             post {
+                // Publicação do relatório JaCoCo
                 always {
                     jacoco(
                         execPattern: '**/target/jacoco.exec',
@@ -70,54 +74,32 @@ pipeline {
                         inclusionPattern: '**/*.class',
                         exclusionPattern: '**/dto/**,**/config/**,**/SubscriptionApplication.class'
                     )
-                    archiveArtifacts artifacts: '**/target/site/jacoco/**', fingerprint: true
                 }
             }
         }
         
-        stage('Quality Gate') {
+        stage('Package Artifact') {
+            // Este stage só será executado se todos os stages anteriores (incluindo o Quality Gate) passarem.
+            // A condição 'when' original não é mais necessária, mas podemos usá-la para clareza.
             steps {
-                script {
-                    echo '🎯 Verificando Quality Gate (99% de cobertura)...'
-                    sh 'mvn jacoco:check'
-                    
-                    def coveragePassed = true
-                    try {
-                        sh 'mvn jacoco:check'
-                    } catch (Exception e) {
-                        coveragePassed = false
-                        error "❌ Quality Gate FALHOU! Cobertura abaixo de 99%"
-                    }
-                    
-                    if (coveragePassed) {
-                        echo "✅ Quality Gate PASSOU! Cobertura >= 99%"
-                        env.QUALITY_GATE_PASSED = 'true'
-                    }
-                }
-            }
-        }
-        
-        stage('Package') {
-            when {
-                expression { env.QUALITY_GATE_PASSED == 'true' }
-            }
-            steps {
-                echo '📦 Empacotando aplicação...'
+                echo '📦 Empacotando aplicação (Pulando testes novamente)...'
                 sh 'mvn package -DskipTests'
-                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
             }
         }
     }
     
+    // AÇÕES FINAIS E LIMPEZA
     post {
         always {
-            echo '🧹 Limpando workspace...'
+            echo '🧹 Limpeza, Arquivamento e Finalização...'
+            // Arquivamento consolidado: JAR, relatórios Surefire, PMD e JaCoCo
+            archiveArtifacts artifacts: '**/target/*.jar, **/target/surefire-reports/*, **/target/pmd.xml, **/target/site/jacoco/**', fingerprint: true
         }
         success {
-            echo '✅ Pipeline DEV executado com SUCESSO!'
+            echo '✅ Pipeline DEV executado com SUCESSO! Artefatos prontos.'
         }
         failure {
-            echo '❌ Pipeline DEV FALHOU!'
+            echo '❌ Pipeline DEV FALHOU! Verifique o log para detalhes sobre falhas de Teste/PMD/Cobertura.'
         }
     }
 }
