@@ -67,12 +67,20 @@ public class Credits implements Serializable {
      * Remove créditos (retorna novo objeto - imutabilidade)
      */
     public Credits subtract(int value) {
+        validateSufficientCredits(value);
+        return new Credits(this.amount - value);
+    }
+    
+    /**
+     * Valida se há créditos suficientes para subtrair.
+     * Extraído para reduzir complexidade ciclomática.
+     */
+    private void validateSufficientCredits(int value) {
         if (this.amount < value) {
             throw new IllegalArgumentException(
                 String.format("Insufficient credits: has %d, needs %d", this.amount, value)
             );
         }
-        return new Credits(this.amount - value);
     }
     
     /**

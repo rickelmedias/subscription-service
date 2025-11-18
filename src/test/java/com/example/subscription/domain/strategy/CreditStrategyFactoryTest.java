@@ -83,4 +83,11 @@ class CreditStrategyFactoryTest {
             CreditStrategyFactory.StrategyType.PREMIUM
         );
     }
+
+    @Test
+    @DisplayName("Should throw exception when strategy type is null")
+    void shouldThrowExceptionWhenStrategyTypeIsNull() {
+        assertThatThrownBy(() -> factory.getStrategy(null))
+            .isInstanceOf(NullPointerException.class);
+    }
 }

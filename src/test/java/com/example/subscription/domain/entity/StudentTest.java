@@ -132,4 +132,22 @@ class StudentTest {
         assertThat(student.getCompletedCourses()).isEqualTo(4);
         assertThat(student.getCredits()).isEqualTo(9); // 3 aprovações × 3 créditos
     }
+
+    @Test
+    @DisplayName("Should return zero when credits is null")
+    void shouldReturnZeroWhenCreditsIsNull() throws Exception {
+        // Usa reflexão para criar um Student com credits null (simula estado JPA não inicializado)
+        Student student = Student.builder()
+                .name("Test")
+                .completedCourses(0)
+                .build();
+        
+        // Usa reflexão para definir credits como null
+        java.lang.reflect.Field creditsField = Student.class.getDeclaredField("credits");
+        creditsField.setAccessible(true);
+        creditsField.set(student, null);
+        
+        // Verifica que getCredits() retorna 0 quando credits é null
+        assertThat(student.getCredits()).isZero();
+    }
 }

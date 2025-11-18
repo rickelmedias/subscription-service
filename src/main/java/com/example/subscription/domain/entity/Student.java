@@ -73,7 +73,14 @@ public class Student {
      */
     public void completeCourse(CourseAverage average) {
         this.completedCourses++;
-        
+        awardCreditsIfPassed(average);
+    }
+    
+    /**
+     * Adiciona créditos se o estudante passou no curso.
+     * Extraído para reduzir complexidade ciclomática.
+     */
+    private void awardCreditsIfPassed(CourseAverage average) {
         if (average.isAbove(BusinessRules.PASSING_GRADE_THRESHOLD)) {
             this.credits = this.credits.add(BusinessRules.CREDITS_PER_APPROVED_COURSE);
         }
@@ -114,6 +121,14 @@ public class Student {
      * Necessário para compatibilidade com DTOs e testes
      */
     public int getCredits() {
+        return getCreditsAmount();
+    }
+    
+    /**
+     * Retorna o valor dos créditos, tratando null.
+     * Extraído para reduzir complexidade ciclomática.
+     */
+    private int getCreditsAmount() {
         return credits != null ? credits.getAmount() : 0;
     }
     

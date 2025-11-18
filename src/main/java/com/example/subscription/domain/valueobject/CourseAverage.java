@@ -85,19 +85,7 @@ public class CourseAverage implements Serializable, Comparable<CourseAverage> {
      * Retorna a faixa de aproveitamento
      */
     public PerformanceLevel getPerformanceLevel() {
-        if (value >= 9.0) {
-            return PerformanceLevel.EXCELLENT;
-        }
-        if (value >= 8.0) {
-            return PerformanceLevel.VERY_GOOD;
-        }
-        if (value > 7.0) {
-            return PerformanceLevel.GOOD;
-        }
-        if (value >= 6.0) {
-            return PerformanceLevel.AVERAGE;
-        }
-        return PerformanceLevel.BELOW_AVERAGE;
+        return PerformanceLevel.fromValue(value);
     }
     
     @Override
@@ -118,6 +106,35 @@ public class CourseAverage implements Serializable, Comparable<CourseAverage> {
         VERY_GOOD,      // >= 8.0
         GOOD,           // > 7.0
         AVERAGE,        // >= 6.0
-        BELOW_AVERAGE   // < 6.0
+        BELOW_AVERAGE;  // < 6.0
+        
+        private static final PerformanceLevel[] LEVELS_BY_THRESHOLD = {
+            EXCELLENT,    // index 0: >= 9.0
+            VERY_GOOD,    // index 1: >= 8.0
+            GOOD,         // index 2: > 7.0
+            AVERAGE,      // index 3: >= 6.0
+            BELOW_AVERAGE // index 4: < 6.0
+        };
+        
+        /**
+         * Retorna o nível de performance baseado no valor da média.
+         * Reduz complexidade ciclomática usando array indexado.
+         */
+        public static PerformanceLevel fromValue(double value) {
+            int index = findPerformanceIndex(value);
+            return LEVELS_BY_THRESHOLD[index];
+        }
+        
+        /**
+         * Encontra o índice do nível de performance usando comparações ordenadas.
+         * Reduz complexidade ciclomática ao mínimo necessário.
+         */
+        private static int findPerformanceIndex(double value) {
+            if (value >= 9.0) return 0; // EXCELLENT
+            if (value >= 8.0) return 1; // VERY_GOOD
+            if (value > 7.0) return 2;  // GOOD
+            if (value >= 6.0) return 3; // AVERAGE
+            return 4; // BELOW_AVERAGE
+        }
     }
 }
