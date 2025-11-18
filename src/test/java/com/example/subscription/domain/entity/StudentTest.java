@@ -1,5 +1,6 @@
 package com.example.subscription.domain.entity;
 
+import com.example.subscription.domain.valueobject.Credits;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -149,5 +150,62 @@ class StudentTest {
         
         // Verifica que getCredits() retorna 0 quando credits é null
         assertThat(student.getCredits()).isZero();
+    }
+
+    @Test
+    @DisplayName("Should set credits using setter")
+    void shouldSetCreditsUsingSetter() {
+        Student student = new Student("Test");
+        student.setCredits(10);
+        
+        assertThat(student.getCredits()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Should use builder pattern")
+    void shouldUseBuilderPattern() {
+        Student student = Student.builder()
+                .name("Builder Test")
+                .completedCourses(2)
+                .credits(Credits.of(5))
+                .build();
+        
+        assertThat(student.getName()).isEqualTo("Builder Test");
+        assertThat(student.getCompletedCourses()).isEqualTo(2);
+        assertThat(student.getCredits()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Should complete course with CourseAverage object")
+    void shouldCompleteCourseWithCourseAverageObject() {
+        Student student = new Student("Test", 0);
+        com.example.subscription.domain.valueobject.CourseAverage average = 
+            com.example.subscription.domain.valueobject.CourseAverage.of(8.5);
+        
+        student.completeCourse(average);
+        
+        assertThat(student.getCompletedCourses()).isEqualTo(1);
+        assertThat(student.getCredits()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Should not add credits when average equals threshold")
+    void shouldNotAddCreditsWhenAverageEqualsThreshold() {
+        Student student = new Student("Test", 5);
+        student.completeCourse(7.0);
+        
+        assertThat(student.getCompletedCourses()).isEqualTo(1);
+        assertThat(student.getCredits()).isEqualTo(5); // Sem mudança
+    }
+
+    @Test
+    @DisplayName("Should test toString method")
+    void shouldTestToStringMethod() {
+        Student student = new Student("Test Student");
+        student.setId(1L);
+        
+        String toString = student.toString();
+        assertThat(toString).isNotNull();
+        assertThat(toString).contains("Test Student");
     }
 }

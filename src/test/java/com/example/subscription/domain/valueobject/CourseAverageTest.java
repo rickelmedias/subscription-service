@@ -27,6 +27,34 @@ class CourseAverageTest {
     }
 
     @Test
+    @DisplayName("Should throw exception for negative values (left side of OR)")
+    void shouldThrowExceptionForNegativeValues() {
+        assertThatThrownBy(() -> CourseAverage.of(-1.0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Average must be a value between 0.0 and 10.0.");
+    }
+
+    @Test
+    @DisplayName("Should throw exception for values above 10.0 (right side of OR)")
+    void shouldThrowExceptionForValuesAboveMax() {
+        assertThatThrownBy(() -> CourseAverage.of(10.1))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Average must be a value between 0.0 and 10.0.");
+    }
+
+    @Test
+    @DisplayName("Should test boundary values 0.0 and 10.0")
+    void shouldTestBoundaryValues() {
+        // Test minimum boundary
+        CourseAverage min = CourseAverage.of(0.0);
+        assertThat(min.getValue()).isEqualTo(0.0);
+        
+        // Test maximum boundary
+        CourseAverage max = CourseAverage.of(10.0);
+        assertThat(max.getValue()).isEqualTo(10.0);
+    }
+
+    @Test
     @DisplayName("Should check if average is above threshold")
     void shouldCheckIfAverageIsAboveThreshold() {
         CourseAverage average = CourseAverage.of(8.0);
@@ -125,5 +153,48 @@ class CourseAverageTest {
         
         assertThat(CourseAverage.of(5.99).getPerformanceLevel())
                 .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+    }
+
+    @Test
+    @DisplayName("Should test all performance level edge cases")
+    void shouldTestAllPerformanceLevelEdgeCases() {
+        // Test exact boundaries
+        assertThat(CourseAverage.of(10.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+        
+        assertThat(CourseAverage.of(9.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.EXCELLENT);
+        
+        assertThat(CourseAverage.of(8.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.VERY_GOOD);
+        
+        assertThat(CourseAverage.of(7.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.GOOD);
+        
+        assertThat(CourseAverage.of(6.5).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.AVERAGE);
+        
+        assertThat(CourseAverage.of(0.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+        
+        assertThat(CourseAverage.of(5.0).getPerformanceLevel())
+                .isEqualTo(CourseAverage.PerformanceLevel.BELOW_AVERAGE);
+    }
+
+    @Test
+    @DisplayName("Should test rounding edge cases")
+    void shouldTestRoundingEdgeCases() {
+        // Test rounding up
+        assertThat(CourseAverage.of(8.455).getValue()).isEqualTo(8.46);
+        assertThat(CourseAverage.of(8.445).getValue()).isEqualTo(8.45);
+        
+        // Test rounding down
+        assertThat(CourseAverage.of(7.234).getValue()).isEqualTo(7.23);
+        assertThat(CourseAverage.of(7.235).getValue()).isEqualTo(7.24);
+        
+        // Test exact values
+        assertThat(CourseAverage.of(7.0).getValue()).isEqualTo(7.0);
+        assertThat(CourseAverage.of(10.0).getValue()).isEqualTo(10.0);
+        assertThat(CourseAverage.of(0.0).getValue()).isEqualTo(0.0);
     }
 }

@@ -99,4 +99,36 @@ class CreditsTest {
         Credits credits = Credits.of(5);
         assertThat(credits.isEmpty()).isFalse();
     }
+
+    @Test
+    @DisplayName("Should test subtract with exact amount")
+    void shouldTestSubtractWithExactAmount() {
+        Credits credits = Credits.of(10);
+        Credits result = credits.subtract(10);
+        
+        assertThat(result.getAmount()).isZero();
+        assertThat(result.isEmpty()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should test add with zero")
+    void shouldTestAddWithZero() {
+        Credits credits = Credits.of(5);
+        Credits result = credits.add(0);
+        
+        assertThat(result.getAmount()).isEqualTo(5);
+        assertThat(result).isEqualTo(credits);
+    }
+
+    @Test
+    @DisplayName("Should test hasAtLeast edge cases")
+    void shouldTestHasAtLeastEdgeCases() {
+        Credits credits = Credits.of(10);
+        
+        assertThat(credits.hasAtLeast(0)).isTrue();
+        assertThat(credits.hasAtLeast(1)).isTrue();
+        assertThat(credits.hasAtLeast(9)).isTrue();
+        assertThat(credits.hasAtLeast(10)).isTrue();
+        assertThat(credits.hasAtLeast(11)).isFalse();
+    }
 }

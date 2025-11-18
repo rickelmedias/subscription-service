@@ -90,4 +90,34 @@ class CreditStrategyFactoryTest {
         assertThatThrownBy(() -> factory.getStrategy(null))
             .isInstanceOf(NullPointerException.class);
     }
+
+    @Test
+    @DisplayName("Should test constructor initialization")
+    void shouldTestConstructorInitialization() {
+        // Verifica que o factory foi inicializado corretamente pelo Spring
+        assertThat(factory).isNotNull();
+        
+        // Verifica que ambas as estratégias estão disponíveis
+        CreditCalculationStrategy standard = factory.getStrategy(
+            CreditStrategyFactory.StrategyType.STANDARD
+        );
+        CreditCalculationStrategy premium = factory.getStrategy(
+            CreditStrategyFactory.StrategyType.PREMIUM
+        );
+        
+        assertThat(standard).isNotNull();
+        assertThat(premium).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Should test enum valueOf method")
+    void shouldTestEnumValueOfMethod() {
+        CreditStrategyFactory.StrategyType standard = 
+            CreditStrategyFactory.StrategyType.valueOf("STANDARD");
+        CreditStrategyFactory.StrategyType premium = 
+            CreditStrategyFactory.StrategyType.valueOf("PREMIUM");
+        
+        assertThat(standard).isEqualTo(CreditStrategyFactory.StrategyType.STANDARD);
+        assertThat(premium).isEqualTo(CreditStrategyFactory.StrategyType.PREMIUM);
+    }
 }
