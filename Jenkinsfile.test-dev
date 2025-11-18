@@ -2,108 +2,104 @@ pipeline {
     agent any
     
     tools {
+        // Assume que estas ferramentas estão configuradas no Jenkins Global Tool Configuration
         maven 'Maven-3.9'
         jdk 'JDK-17'
     }
     
+    // VARIÁVEIS DE AMBIENTE
     environment {
-        QUALITY_GATE_THRESHOLD = 0.99
+        // Note: O JaCoCo deve ser configurado no pom.xml para falhar o build
+        // se a cobertura for menor que este valor, tornando esta variável opcional.
+        QUALITY_GATE_THRESHOLD = '0.99' 
     }
     
     stages {
         stage('Checkout') {
             steps {
-                echo '🔄 Clonando repositório...'
+                echo '🔄 Clonando repositório e verificando a branch...'
                 checkout scm
             }
         }
         
-        stage('Build') {
+        stage('Build & Unit Tests') {
             steps {
-                echo '🔨 Compilando aplicação...'
-                sh 'mvn clean compile'
+                echo '🔨 Compilando, empacotando e executando testes unitários...'
+                // Usa 'install' para garantir que os testes rodem (incluindo JaCoCo instrumentation)
+                // e que o JAR seja empacotado para o arquivo (se necessário).
+                sh 'mvn clean install' 
             }
-        }
-        
-        stage('Unit Tests') {
-            steps {
-                echo '🧪 Executando testes unitários...'
-                sh 'mvn test'
-            }
+            // Bloco 'post' dentro do stage para processamento imediato
             post {
                 always {
+                    // Publica o relatório JUnit (Surefire)
                     junit '**/target/surefire-reports/*.xml'
-                    archiveArtifacts artifacts: '**/target/surefire-reports/**', fingerprint: true
                 }
             }
         }
         
-        stage('Code Analysis - PMD') {
+        stage('Code Analysis (PMD)') {
             steps {
-                echo '🔍 Análise estática de código (PMD)...'
+                echo '🔍 Executando Análise Estática de Código (PMD)...'
+                // O pmd:pmd gera o relatório XML
                 sh 'mvn pmd:pmd'
             }
             post {
                 always {
+                    // Publica o relatório PMD
                     recordIssues(
                         enabledForFailure: true,
                         tools: [pmdParser(pattern: '**/target/pmd.xml')]
                     )
-                    archiveArtifacts artifacts: '**/target/pmd.xml', fingerprint: true
                 }
             }
         }
         
-        stage('Code Coverage - JaCoCo') {
+        stage('Coverage & Quality Gate') {
             steps {
-                echo '📊 Gerando relatório de cobertura...'
+                echo "📊 Gerando relatório JaCoCo e aplicando Quality Gate (Cobertura: ${env.QUALITY_GATE_THRESHOLD})..."
+                
+                // 1. Gera o relatório JaCoCo (jacoco:report)
+                // 2. Aplica o JaCoCo Check (jacoco:check)
+                //    Se a cobertura for menor que o limite configurado no pom.xml, o build irá FALHAR aqui (exit code != 0)
                 sh 'mvn jacoco:report jacoco:check'
+                echo "✅ JaCoCo Check PASSOU!"
             }
             post {
+                // Publica o relatório JaCoCo
                 always {
                     jacoco(
                         execPattern: '**/target/jacoco.exec',
                         classPattern: '**/target/classes',
                         sourcePattern: '**/src/main/java',
-                        inclusionPattern: '**/*.class',
-                        exclusionPattern: '**/dto/**,**/config/**,**/SubscriptionApplication.class'
+                        // Mantém a exclusão para classes que não devem ser testadas
+                        exclusionPattern: '**/dto/**,**/config/**,**/SubscriptionApplication.class' 
                     )
-                    archiveArtifacts artifacts: '**/target/site/jacoco/**', fingerprint: true
-                }
-            }
-        }
-        
-        stage('Quality Gate') {
-            steps {
-                script {
-                    echo '🎯 Verificando Quality Gate (99% de cobertura)...'
-                    try {
-                        sh 'mvn jacoco:check'
-                        echo "✅ Quality Gate PASSOU! Cobertura >= 99%"
-                        env.QUALITY_GATE_PASSED = 'true'
-                    } catch (Exception e) {
-                        echo "❌ Quality Gate FALHOU! Cobertura abaixo de 99%"
-                        env.QUALITY_GATE_PASSED = 'false'
-                        currentBuild.result = 'UNSTABLE'
-                    }
                 }
             }
         }
     }
     
+    // AÇÕES FINAIS
     post {
+        // Ações de arquivamento para todos os casos
         always {
-            echo '📋 Relatórios gerados:'
-            echo '  - JUnit: target/surefire-reports/'
-            echo '  - PMD: target/pmd.xml'
-            echo '  - JaCoCo: target/site/jacoco/'
+            echo '📦 Arquivando relatórios e artefatos...'
+            // Arquivamento consolidado para logs e relatórios
+            archiveArtifacts artifacts: '**/target/surefire-reports/*, **/target/pmd.xml, **/target/site/jacoco/**', fingerprint: true
+            
+            echo '📋 Relatórios de Qualidade disponíveis no Jenkins.'
         }
+        // Ações condicionais
         success {
-            echo '✅ Pipeline TEST-DEV executado com SUCESSO!'
+            echo '✅ Pipeline TEST-DEV executado com SUCESSO! Todos os gates de qualidade PASSARAM.'
+        }
+        unstable {
+            // Unstable ocorre se o Quality Gate for configurado para retornar UNSTABLE em vez de FAILURE
+            echo '⚠️ Pipeline UNSTABLE! Quality Gate não atingido.'
         }
         failure {
-            echo '❌ Pipeline TEST-DEV FALHOU!'
+            echo '❌ Pipeline TEST-DEV FALHOU! Revise os testes unitários ou o código.'
         }
     }
 }
-
