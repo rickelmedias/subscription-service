@@ -2,45 +2,78 @@ pipeline {
     agent any
     
     stages {
-        stage('Checkout') {
+        stage('Checkout SCM') {
             steps {
+                echo '🔄 Clonando repositório e verificando a branch...'
                 checkout scm
             }
         }
         
-        stage('Start container') {
+        stage('Start Production Container') {
             steps {
-                echo 'Starting container from Docker Hub...'
-                sh 'docker-compose -f docker-compose.prod.yml pull' // Baixa a imagem do Docker Hub
-                sh 'docker-compose -f docker-compose.prod.yml up -d --no-color'
-                sleep time: 60, unit: 'SECONDS' // Aumenta o tempo para o serviço Spring Boot iniciar
-                sh 'docker-compose -f docker-compose.prod.yml logs' // Verifica os logs para conferir o status do Spring Boot
-                sh 'docker-compose -f docker-compose.prod.yml ps' // Verifica o status do container
+                echo '🚀 Iniciando container de Produção (docker-compose.prod.yml)...'
+                
+                // CORREÇÃO: Usando o comando moderno 'docker compose'
+                sh 'docker compose -f docker-compose.prod.yml pull' 
+                
+                // Sobe os containers em modo detached (-d)
+                sh 'docker compose -f docker-compose.prod.yml up -d --no-color'
+                
+                echo '⏳ Aguardando o serviço Spring Boot se tornar saudável...'
+                
+                // Lógica de resiliência: espera até 5 minutos (300 segundos) para o serviço responder
+                script {
+                    timeout(time: 5, unit: 'MINUTES') { 
+                        waitUntil {
+                            // O curl -f retorna status 0 apenas se a conexão for bem-sucedida E o HTTP for 2xx.
+                            sh(script: 'curl -f http://localhost:8585/actuator/health', returnStatus: true) == 0
+                        }
+                    }
+                    echo "✅ Serviço de Produção UP e respondendo na porta 8585!"
+                }
             }
         }
         
-        stage('Run tests against the container') {
+        stage('Run Sanity Tests') {
             steps {
+                echo '🧪 Executando testes básicos de sanidade no container...'
+                
+                // O teste já foi feito na etapa anterior, mas você pode adicionar mais aqui.
                 script {
                     def response = sh(
-                        script: 'curl -f http://localhost:8585/actuator/health || echo "Service not responding"',
+                        script: 'curl -f http://localhost:8585/algum/endpoint/de/teste || echo "Falha no teste de sanidade"',
                         returnStatus: true
                     )
                     if (response != 0) {
-                        echo "⚠️ Service not responding, but continuing..."
+                        error "❌ Teste de Sanidade FALHOU! O endpoint essencial não respondeu."
                     } else {
-                        echo "✅ Service is responding!"
+                        echo "✅ Teste de Sanidade APROVADO."
                     }
                 }
             }
         }
+        
+        stage('Verification Logs') {
+            steps {
+                // Logs para verificação e depuração
+                sh 'docker compose -f docker-compose.prod.yml ps'
+                sh 'docker compose -f docker-compose.prod.yml logs --tail 20' // Exibe as últimas 20 linhas de logs
+            }
+        }
     }
     
+    // AÇÕES FINAIS
     post {
         always {
-            echo 'Pipeline completed'
-            // Não derruba mais o container aqui
+            echo '📋 Pipeline finalizado.'
+            // Removendo os comandos de logs/status daqui pois já estão na última stage.
+        }
+        success {
+            echo '🚀 Implantação de Produção executada com SUCESSO!'
+        }
+        failure {
+            echo '❌ Implantação de Produção FALHOU! Verifique o log.'
+            // Adicionar ação para reverter ou notificar aqui.
         }
     }
 }
-
