@@ -5,7 +5,7 @@
 ### 1. ✅ Configuração do Projeto (pom.xml)
 - **Corrigido**: Java version de 21 para 17 (conforme exemplo)
 - **Corrigido**: groupId de `com.example` para `ac2_project.example`
-- **Corrigido**: artifactId de `subscription` para `ac2_ca`
+- **Corrigido**: artifactId de `subscription` para `subscription-service`
 - **Corrigido**: Versão do Spring Boot de 3.3.2 para 3.3.4
 - **Adicionado**: Dependência PostgreSQL
 - **Adicionado**: Dependência Spring Boot Actuator
@@ -27,8 +27,8 @@
 ### 4. ✅ Dockerfile
 - **Reescrito**: Seguindo exatamente o exemplo fornecido
 - **Configurado**: Java 17 (openjdk:17)
-- **Configurado**: Working directory `/ac2_ca`
-- **Configurado**: JAR em `/ac2_ca/ac2_ca-0.0.1-SNAPSHOT.jar`
+- **Configurado**: Working directory `/subscription-service`
+- **Configurado**: JAR em `/subscription-service/subscription-service-0.0.1-SNAPSHOT.jar`
 - **Configurado**: Porta 8080 exposta
 
 ### 5. ✅ Docker Compose
@@ -111,7 +111,7 @@
 
 ### Problema 8: groupId/artifactId Incorretos
 **Erro**: groupId e artifactId não seguiam o padrão do exemplo
-**Solução**: Corrigidos para `ac2_project.example` e `ac2_ca`
+**Solução**: Corrigidos para `ac2_project.example` e `subscription-service`
 
 ## Melhorias Implementadas
 
