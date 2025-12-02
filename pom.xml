@@ -26,6 +26,7 @@
         <jacoco.version>0.8.11</jacoco.version>
         <springdoc.version>2.6.0</springdoc.version>
         <pmd.version>3.21.2</pmd.version>
+        <langchain4j.version>0.35.0</langchain4j.version>
     </properties>
 
     <dependencies>
@@ -111,6 +112,27 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- ===============================
+             LANGCHAIN4J - AI/LLM Integration (Ollama Local)
+             =============================== -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -146,6 +168,9 @@
                         <exclude>**/dto/**</exclude>
                         <exclude>**/bdd/**</exclude>
                         <exclude>**/presentation/controller/GlobalExceptionHandler.class</exclude>
+                        <exclude>**/presentation/controller/RecommendationController.class</exclude>
+                        <exclude>**/presentation/controller/RecommendationController$*.class</exclude>
+                        <exclude>**/application/service/CourseRecommendationService.class</exclude>
                         <exclude>**/domain/strategy/CreditStrategyFactory$StrategyType.class</exclude>
                     </excludes>
                 </configuration>

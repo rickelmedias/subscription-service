@@ -36,13 +36,9 @@ pipeline {
     // OPÇÕES DO PIPELINE
     // =========================================================================
     options {
-        // Timeout global do pipeline (30 minutos)
         timeout(time: 30, unit: 'MINUTES')
-        // Mantém apenas os últimos 10 builds
         buildDiscarder(logRotator(numToKeepStr: '10'))
-        // Desabilita checkout automático (faremos manualmente)
         skipDefaultCheckout(true)
-        // Adiciona timestamps nos logs
         timestamps()
     }
     
@@ -51,7 +47,7 @@ pipeline {
         // FASE 1: DEV - TESTES E QUALIDADE DE CÓDIGO
         // =====================================================================
         
-        stage('📥 Checkout SCM') {
+        stage('📥 Checkout SCM') {image.png
             steps {
                 echo '═══════════════════════════════════════════════════════════════'
                 echo '🔄 FASE 1: DEV - Iniciando checkout do repositório...'
@@ -59,18 +55,19 @@ pipeline {
                 checkout scm
                 
                 script {
-                    // Exibe informações do commit para rastreabilidade
+                    // Informações do commit para rastreabilidade
                     def gitCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
                     def gitBranch = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
                     echo "📌 Branch: ${gitBranch}"
                     echo "📌 Commit: ${gitCommit}"
                     
-                    // Armazena para uso posterior
                     env.GIT_COMMIT_SHORT = gitCommit
                     env.GIT_BRANCH_NAME = gitBranch
                 }
             }
         }
+        
+        // Executa build completo com testes
         
         stage('🔨 Build & Unit Tests') {
             steps {
@@ -78,7 +75,6 @@ pipeline {
                 echo '🔨 Compilando aplicação e executando testes unitários...'
                 echo '═══════════════════════════════════════════════════════════════'
                 
-                // Executa build completo com testes
                 sh 'mvn clean install'
                 
                 echo '✅ Build e testes unitários concluídos!'
@@ -96,6 +92,8 @@ pipeline {
                 }
             }
         }
+
+        // Executa análise PMD
         
         stage('🔍 Code Analysis (PMD)') {
             steps {
@@ -103,14 +101,12 @@ pipeline {
                 echo '🔍 Executando análise estática de código com PMD...'
                 echo '═══════════════════════════════════════════════════════════════'
                 
-                // Executa análise PMD
                 sh 'mvn pmd:pmd pmd:check'
                 
                 echo '✅ Análise PMD concluída sem violações críticas!'
             }
             post {
                 always {
-                    // Publica relatório PMD
                     recordIssues(
                         enabledForFailure: true,
                         aggregatingResults: true,
@@ -120,13 +116,14 @@ pipeline {
             }
         }
         
+        // Executa cobertura de código e quality gate
+        
         stage('📊 Coverage & Quality Gate') {
             steps {
                 echo '═══════════════════════════════════════════════════════════════'
                 echo "📊 Verificando cobertura de código (Mínimo: ${env.QUALITY_GATE_THRESHOLD})..."
                 echo '═══════════════════════════════════════════════════════════════'
                 
-                // Gera relatório de cobertura (check já foi executado no mvn install)
                 sh 'mvn jacoco:report'
                 
                 echo '✅ Quality Gate APROVADO! Cobertura mínima atingida.'
@@ -348,12 +345,6 @@ pipeline {
             echo "📌 Imagem Docker: ${DOCKER_IMAGE}:${DOCKER_TAG}"
             echo "📌 Ambiente Staging: http://localhost:${STAGING_PORT}"
             echo '═══════════════════════════════════════════════════════════════'
-            
-            // Notificação de sucesso (exemplo com Slack - descomente se usar)
-            // slackSend(
-            //     color: 'good',
-            //     message: "✅ Pipeline SUCESSO: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-            // )
         }
         
         failure {
@@ -361,17 +352,10 @@ pipeline {
             echo '❌ PIPELINE FALHOU!'
             echo '═══════════════════════════════════════════════════════════════'
             echo 'Verifique os logs acima para identificar o problema.'
-            
-            // Em caso de falha, derruba o ambiente staging
+
             script {
                 sh "docker compose -f ${STAGING_COMPOSE_FILE} down --remove-orphans || true"
             }
-            
-            // Notificação de falha (exemplo com Slack - descomente se usar)
-            // slackSend(
-            //     color: 'danger',
-            //     message: "❌ Pipeline FALHOU: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-            // )
         }
         
         unstable {
@@ -386,7 +370,6 @@ pipeline {
             echo '🛑 PIPELINE ABORTADO!'
             echo '═══════════════════════════════════════════════════════════════'
             
-            // Limpa ambiente em caso de abort
             script {
                 sh "docker compose -f ${STAGING_COMPOSE_FILE} down --remove-orphans || true"
             }

@@ -62,4 +62,15 @@ public class StudentController {
         StudentDTO student = studentService.getStudentById(id);
         return ResponseEntity.ok(student);
     }
+
+    @PostMapping
+    @Operation(summary = "Criar estudante", description = "Cria um novo estudante")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Estudante criado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    })
+    public ResponseEntity<StudentDTO> createStudent(@RequestBody StudentDTO dto) {
+        StudentDTO created = studentService.createStudent(dto);
+        return ResponseEntity.status(201).body(created);
+    }
 }

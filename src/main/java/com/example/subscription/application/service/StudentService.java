@@ -1,6 +1,7 @@
 package com.example.subscription.application.service;
 
 import com.example.subscription.application.dto.StudentDTO;
+import com.example.subscription.domain.entity.Student;
 import com.example.subscription.infrastructure.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -66,5 +67,18 @@ public class StudentService {
         return studentRepository.findById(id)
                 .map(StudentDTO::fromEntity)
                 .orElseThrow(() -> new NoSuchElementException("Student not found: " + id));
+    }
+
+    /**
+     * Cria um novo estudante
+     * 
+     * @param dto dados do estudante
+     * @return DTO do estudante criado
+     */
+    @Transactional
+    public StudentDTO createStudent(StudentDTO dto) {
+        Student student = new Student(dto.getName());
+        Student saved = studentRepository.save(student);
+        return StudentDTO.fromEntity(saved);
     }
 }
