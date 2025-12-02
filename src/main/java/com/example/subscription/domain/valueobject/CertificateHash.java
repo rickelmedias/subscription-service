@@ -38,7 +38,7 @@ import java.time.LocalDateTime;
  */
 @Embeddable
 @Getter
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = "registeredAt") // Exclui timestamp da comparação
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CertificateHash implements Serializable {
     
@@ -46,7 +46,7 @@ public class CertificateHash implements Serializable {
     private static final String SHA256_PATTERN = "^[a-fA-F0-9]{64}$";
     
     private String hash;
-    private LocalDateTime registeredAt;
+    private LocalDateTime registeredAt; // Não participa do equals/hashCode
     private String blockchainNetwork;
     private String transactionId;
     
