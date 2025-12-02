@@ -114,6 +114,14 @@
         </dependency>
 
         <!-- ===============================
+             RABBITMQ - Message Broker (Event-Driven Architecture)
+             =============================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- ===============================
              LANGCHAIN4J - AI/LLM Integration (Ollama Local)
              =============================== -->
         <dependency>
@@ -172,6 +180,8 @@
                         <exclude>**/presentation/controller/RecommendationController$*.class</exclude>
                         <exclude>**/application/service/CourseRecommendationService.class</exclude>
                         <exclude>**/domain/strategy/CreditStrategyFactory$StrategyType.class</exclude>
+                        <exclude>**/domain/event/**</exclude>
+                        <exclude>**/infrastructure/messaging/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
