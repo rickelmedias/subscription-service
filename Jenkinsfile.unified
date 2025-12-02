@@ -126,8 +126,8 @@ pipeline {
                 echo "📊 Verificando cobertura de código (Mínimo: ${env.QUALITY_GATE_THRESHOLD})..."
                 echo '═══════════════════════════════════════════════════════════════'
                 
-                // Gera relatório e verifica cobertura mínima
-                sh 'mvn jacoco:report jacoco:check'
+                // Gera relatório de cobertura (check já foi executado no mvn install)
+                sh 'mvn jacoco:report'
                 
                 echo '✅ Quality Gate APROVADO! Cobertura mínima atingida.'
             }
