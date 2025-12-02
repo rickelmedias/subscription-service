@@ -100,16 +100,15 @@ public class RecommendationController {
 
     /**
      * Verifica se o serviço de IA está disponível.
+     * 
+     * <p>Nota: Este endpoint retorna um status simples. Para verificação real
+     * do Ollama, seria necessário fazer uma chamada ao serviço.</p>
      */
     @GetMapping("/health")
     @Operation(summary = "Health check da IA", description = "Verifica se o Ollama está respondendo")
     public ResponseEntity<String> healthCheck() {
-        try {
-            // Teste simples para verificar se Ollama está online
-            return ResponseEntity.ok("Ollama service is available");
-        } catch (Exception e) {
-            return ResponseEntity.status(503).body("Ollama service unavailable: " + e.getMessage());
-        }
+        // Retorna status simples - verificação real do Ollama requer integração
+        return ResponseEntity.ok("Ollama service is available");
     }
 
     // ========== DTOs internos ==========

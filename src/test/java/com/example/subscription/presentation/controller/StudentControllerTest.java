@@ -15,8 +15,10 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -86,5 +88,26 @@ class StudentControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    /**
+     * Teste para criação de estudante via POST.
+     * @author Guilherme
+     */
+    @Test
+    @DisplayName("POST /students should create student and return 201")
+    void whenCreateStudent_shouldReturnCreatedStudent() throws Exception {
+        // Arrange
+        StudentDTO inputDto = new StudentDTO(null, "Novo Aluno", 0, 0);
+        StudentDTO createdDto = new StudentDTO(10L, "Novo Aluno", 0, 0);
+        when(studentService.createStudent(any(StudentDTO.class))).thenReturn(createdDto);
+
+        // Act & Assert
+        mockMvc.perform(post("/students")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\": \"Novo Aluno\", \"completedCourses\": 0, \"credits\": 0}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(10)))
+                .andExpect(jsonPath("$.name", is("Novo Aluno")));
     }
 }
