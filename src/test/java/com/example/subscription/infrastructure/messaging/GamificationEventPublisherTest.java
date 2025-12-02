@@ -212,31 +212,48 @@ class GamificationEventPublisherTest {
         }
 
         @Test
-        @DisplayName("Should handle exception when publishing notification")
+        @DisplayName("Should handle exception when publishing notification and continue to analytics")
         void shouldHandleExceptionWhenPublishingNotification() {
-            // Given
+            // Given - Evento aprovado (vai chamar publishNotification)
             CourseCompletedEvent event = createPassedEvent();
-            doThrow(new AmqpException("Notification queue unavailable"))
+            
+            // Configurar: primeira chamada OK, segunda (notification) falha, terceira (analytics) OK
+            doNothing()
+                .doThrow(new AmqpException("Notification queue unavailable"))
+                .doNothing()
                 .when(rabbitTemplate)
-                .convertAndSend(eq(EXCHANGE_NAME), eq("notification.course.completed"), any(CourseCompletedEvent.class));
+                .convertAndSend(anyString(), anyString(), any(CourseCompletedEvent.class));
 
-            // When/Then - Não deve lançar exceção
+            // When/Then - Não deve lançar exceção (catch interno captura)
             assertThatCode(() -> publisher.publishCourseCompleted(event))
                 .doesNotThrowAnyException();
+            
+            // Verifica que analytics ainda foi tentado (3 chamadas no total)
+            verify(rabbitTemplate, times(3)).convertAndSend(
+                anyString(), anyString(), any(CourseCompletedEvent.class)
+            );
         }
 
         @Test
         @DisplayName("Should handle exception when publishing analytics")
         void shouldHandleExceptionWhenPublishingAnalytics() {
-            // Given
-            CourseCompletedEvent event = createPassedEvent();
-            doThrow(new AmqpException("Analytics queue unavailable"))
+            // Given - Evento reprovado (não vai chamar publishNotification, só analytics)
+            CourseCompletedEvent event = createFailedEvent();
+            
+            // Configurar: primeira chamada OK, segunda (analytics) falha
+            doNothing()
+                .doThrow(new AmqpException("Analytics queue unavailable"))
                 .when(rabbitTemplate)
-                .convertAndSend(eq(EXCHANGE_NAME), eq("analytics.gamification"), any(CourseCompletedEvent.class));
+                .convertAndSend(anyString(), anyString(), any(CourseCompletedEvent.class));
 
-            // When/Then - Não deve lançar exceção
+            // When/Then - Não deve lançar exceção (catch interno captura)
             assertThatCode(() -> publisher.publishCourseCompleted(event))
                 .doesNotThrowAnyException();
+            
+            // Verifica que ambas as chamadas foram feitas (course.completed + analytics)
+            verify(rabbitTemplate, times(2)).convertAndSend(
+                anyString(), anyString(), any(CourseCompletedEvent.class)
+            );
         }
 
         @Test
