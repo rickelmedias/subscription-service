@@ -11,13 +11,25 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
- * Serviço de Estudantes.
+ * Application Service para gerenciamento de Estudantes.
  * 
- * Responsabilidades:
- * - CRUD de estudantes
- * - Consultas e listagens
+ * <h2>Clean Architecture - Application Layer:</h2>
+ * <ul>
+ *   <li><b>Orquestração</b>: Coordena operações entre Repository e Domain</li>
+ *   <li><b>DTO Mapping</b>: Converte Entity ↔ DTO</li>
+ *   <li><b>Transaction Management</b>: Gerencia transações com @Transactional</li>
+ *   <li><b>Dependency Inversion</b>: Depende de abstrações (Repository interface)</li>
+ * </ul>
  * 
- * Rickelme
+ * <h2>Responsabilidades:</h2>
+ * <ul>
+ *   <li>Listar todos os estudantes</li>
+ *   <li>Buscar estudante por ID</li>
+ * </ul>
+ * 
+ * @author Rickelme
+ * @see StudentDTO DTO de transferência de dados
+ * @see StudentRepository Repositório de acesso a dados
  */
 @Service
 public class StudentService {

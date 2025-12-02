@@ -1,0 +1,405 @@
+/**
+ * =============================================================================
+ * JENKINSFILE UNIFICADO - DEV + IMAGE_DOCKER + STAGING
+ * =============================================================================
+ * 
+ * Este pipeline integra três estágios principais do ciclo DevOps:
+ *   1. DEV         - Testes unitários, análise de código (PMD) e quality gate (JaCoCo)
+ *   2. IMAGE_DOCKER - Build e push da imagem Docker para o Docker Hub
+ *   3. STAGING     - Deploy e validação no ambiente de staging
+ *
+ * Autor: Pipeline Groovy unificado sem uso de Freestyle
+ * =============================================================================
+ */
+
+pipeline {
+    agent any
+    
+    // =========================================================================
+    // CONFIGURAÇÃO DE FERRAMENTAS
+    // =========================================================================
+    tools {
+        maven 'Maven-3.9'
+        jdk 'JDK-17'
+    }
+    
+    // =========================================================================
+    // VARIÁVEIS DE AMBIENTE GLOBAIS
+    // =========================================================================
+    environment {
+        // Configurações de qualidade
+        QUALITY_GATE_THRESHOLD = '0.99'
+        
+        // Configurações Docker
+        DOCKER_IMAGE = 'rickelmedias/subscription-service'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        
+        // Configurações de ambiente
+        STAGING_PORT = '8686'
+        STAGING_COMPOSE_FILE = 'docker-compose.staging.yml'
+    }
+    
+    // =========================================================================
+    // OPÇÕES DO PIPELINE
+    // =========================================================================
+    options {
+        // Timeout global do pipeline (30 minutos)
+        timeout(time: 30, unit: 'MINUTES')
+        // Mantém apenas os últimos 10 builds
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        // Desabilita checkout automático (faremos manualmente)
+        skipDefaultCheckout(true)
+        // Adiciona timestamps nos logs
+        timestamps()
+    }
+    
+    stages {
+        // =====================================================================
+        // FASE 1: DEV - TESTES E QUALIDADE DE CÓDIGO
+        // =====================================================================
+        
+        stage('📥 Checkout SCM') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🔄 FASE 1: DEV - Iniciando checkout do repositório...'
+                echo '═══════════════════════════════════════════════════════════════'
+                checkout scm
+                
+                script {
+                    // Exibe informações do commit para rastreabilidade
+                    def gitCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    def gitBranch = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
+                    echo "📌 Branch: ${gitBranch}"
+                    echo "📌 Commit: ${gitCommit}"
+                    
+                    // Armazena para uso posterior
+                    env.GIT_COMMIT_SHORT = gitCommit
+                    env.GIT_BRANCH_NAME = gitBranch
+                }
+            }
+        }
+        
+        stage('🔨 Build & Unit Tests') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🔨 Compilando aplicação e executando testes unitários...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                // Executa build completo com testes
+                sh 'mvn clean install'
+                
+                echo '✅ Build e testes unitários concluídos!'
+            }
+            post {
+                always {
+                    // Publica relatório JUnit (Surefire)
+                    junit(
+                        testResults: '**/target/surefire-reports/*.xml',
+                        allowEmptyResults: true
+                    )
+                }
+                failure {
+                    echo '❌ Falha nos testes unitários!'
+                }
+            }
+        }
+        
+        stage('🔍 Code Analysis (PMD)') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🔍 Executando análise estática de código com PMD...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                // Executa análise PMD
+                sh 'mvn pmd:pmd pmd:check'
+                
+                echo '✅ Análise PMD concluída sem violações críticas!'
+            }
+            post {
+                always {
+                    // Publica relatório PMD
+                    recordIssues(
+                        enabledForFailure: true,
+                        aggregatingResults: true,
+                        tools: [pmdParser(pattern: '**/target/pmd.xml')]
+                    )
+                }
+            }
+        }
+        
+        stage('📊 Coverage & Quality Gate') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo "📊 Verificando cobertura de código (Mínimo: ${env.QUALITY_GATE_THRESHOLD})..."
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                // Gera relatório e verifica cobertura mínima
+                sh 'mvn jacoco:report jacoco:check'
+                
+                echo '✅ Quality Gate APROVADO! Cobertura mínima atingida.'
+            }
+            post {
+                always {
+                    // Publica relatório JaCoCo
+                    jacoco(
+                        execPattern: '**/target/jacoco.exec',
+                        classPattern: '**/target/classes',
+                        sourcePattern: '**/src/main/java',
+                        inclusionPattern: '**/*.class',
+                        exclusionPattern: '**/dto/**,**/config/**,**/SubscriptionApplication.class'
+                    )
+                }
+            }
+        }
+        
+        // =====================================================================
+        // FASE 2: IMAGE_DOCKER - BUILD E PUSH DA IMAGEM
+        // =====================================================================
+        
+        stage('📦 Package Artifact') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🔄 FASE 2: IMAGE_DOCKER - Empacotando aplicação...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                // Gera JAR final (testes já foram executados)
+                sh 'mvn package -DskipTests'
+                
+                echo '✅ Artefato JAR criado com sucesso!'
+            }
+        }
+        
+        stage('🐳 Build Docker Image') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🐳 Construindo imagem Docker...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                script {
+                    // Constrói imagem com tag do BUILD_NUMBER
+                    sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                    
+                    // Adiciona tag 'latest'
+                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest"
+                    
+                    // Adiciona tag com commit (para rastreabilidade)
+                    sh "docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:${env.GIT_COMMIT_SHORT}"
+                    
+                    echo "✅ Imagens criadas:"
+                    echo "   - ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                    echo "   - ${DOCKER_IMAGE}:latest"
+                    echo "   - ${DOCKER_IMAGE}:${env.GIT_COMMIT_SHORT}"
+                }
+            }
+        }
+        
+        stage('📤 Push Docker Image') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '📤 Enviando imagem para Docker Hub...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                script {
+                    // Autentica e envia imagens para o Docker Hub
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: "${DOCKER_CREDENTIALS_ID}",
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_PASS'
+                        )
+                    ]) {
+                        sh '''
+                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                            
+                            echo "📤 Pushing ${DOCKER_IMAGE}:${DOCKER_TAG}..."
+                            docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                            
+                            echo "📤 Pushing ${DOCKER_IMAGE}:latest..."
+                            docker push ${DOCKER_IMAGE}:latest
+                            
+                            echo "📤 Pushing ${DOCKER_IMAGE}:${GIT_COMMIT_SHORT}..."
+                            docker push ${DOCKER_IMAGE}:${GIT_COMMIT_SHORT}
+                            
+                            docker logout
+                        '''
+                    }
+                    
+                    echo '✅ Imagens enviadas com sucesso para o Docker Hub!'
+                }
+            }
+        }
+        
+        // =====================================================================
+        // FASE 3: STAGING - DEPLOY E VALIDAÇÃO
+        // =====================================================================
+        
+        stage('🚀 Deploy Staging') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🔄 FASE 3: STAGING - Iniciando deploy no ambiente staging...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                script {
+                    // Para containers existentes (se houver)
+                    sh "docker compose -f ${STAGING_COMPOSE_FILE} down --remove-orphans || true"
+                    
+                    // Baixa a imagem mais recente
+                    sh "docker compose -f ${STAGING_COMPOSE_FILE} pull"
+                    
+                    // Inicia os containers em modo detached
+                    sh "docker compose -f ${STAGING_COMPOSE_FILE} up -d --no-color"
+                    
+                    echo '⏳ Aguardando serviço se tornar saudável...'
+                    
+                    // Aguarda o serviço ficar disponível (máximo 5 minutos)
+                    timeout(time: 5, unit: 'MINUTES') {
+                        waitUntil(initialRecurrencePeriod: 10000, quiet: true) {
+                            def status = sh(
+                                script: "curl -sf http://localhost:${STAGING_PORT}/actuator/health || exit 1",
+                                returnStatus: true
+                            )
+                            return status == 0
+                        }
+                    }
+                    
+                    echo "✅ Serviço de Staging UP e respondendo na porta ${STAGING_PORT}!"
+                }
+            }
+        }
+        
+        stage('🧪 Staging Tests') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '🧪 Executando testes de validação no ambiente staging...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                script {
+                    // Teste 1: Health Check
+                    echo '📋 Teste 1: Verificando Health Check...'
+                    def healthResponse = sh(
+                        script: "curl -sf http://localhost:${STAGING_PORT}/actuator/health",
+                        returnStdout: true
+                    ).trim()
+                    echo "   Response: ${healthResponse}"
+                    
+                    // Teste 2: Info endpoint (se disponível)
+                    echo '📋 Teste 2: Verificando Info endpoint...'
+                    sh(
+                        script: "curl -sf http://localhost:${STAGING_PORT}/actuator/info || echo 'Info endpoint não disponível'",
+                        returnStatus: true
+                    )
+                    
+                    // Teste 3: Swagger/OpenAPI (se disponível)
+                    echo '📋 Teste 3: Verificando documentação API...'
+                    sh(
+                        script: "curl -sf http://localhost:${STAGING_PORT}/swagger-ui.html || curl -sf http://localhost:${STAGING_PORT}/v3/api-docs || echo 'Documentação API não disponível'",
+                        returnStatus: true
+                    )
+                    
+                    echo '✅ Testes de staging concluídos com sucesso!'
+                }
+            }
+        }
+        
+        stage('📋 Verification Logs') {
+            steps {
+                echo '═══════════════════════════════════════════════════════════════'
+                echo '📋 Coletando logs e status dos containers...'
+                echo '═══════════════════════════════════════════════════════════════'
+                
+                // Status dos containers
+                sh "docker compose -f ${STAGING_COMPOSE_FILE} ps"
+                
+                // Logs dos containers (últimas 50 linhas)
+                sh "docker compose -f ${STAGING_COMPOSE_FILE} logs --tail 50"
+            }
+        }
+    }
+    
+    // =========================================================================
+    // AÇÕES FINAIS (POST-BUILD)
+    // =========================================================================
+    post {
+        always {
+            echo '═══════════════════════════════════════════════════════════════'
+            echo '📦 Arquivando artefatos e finalizando pipeline...'
+            echo '═══════════════════════════════════════════════════════════════'
+            
+            // Arquiva artefatos importantes
+            archiveArtifacts(
+                artifacts: '''
+                    **/target/*.jar,
+                    **/target/surefire-reports/*,
+                    **/target/pmd.xml,
+                    **/target/site/jacoco/**
+                ''',
+                fingerprint: true,
+                allowEmptyArchive: true
+            )
+            
+            // Limpeza de imagens Docker locais (opcional)
+            script {
+                sh '''
+                    echo "🧹 Limpeza de recursos Docker..."
+                    docker image prune -f || true
+                '''
+            }
+        }
+        
+        success {
+            echo '═══════════════════════════════════════════════════════════════'
+            echo '✅ PIPELINE COMPLETO COM SUCESSO!'
+            echo '═══════════════════════════════════════════════════════════════'
+            echo "📌 Branch: ${env.GIT_BRANCH_NAME}"
+            echo "📌 Commit: ${env.GIT_COMMIT_SHORT}"
+            echo "📌 Imagem Docker: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+            echo "📌 Ambiente Staging: http://localhost:${STAGING_PORT}"
+            echo '═══════════════════════════════════════════════════════════════'
+            
+            // Notificação de sucesso (exemplo com Slack - descomente se usar)
+            // slackSend(
+            //     color: 'good',
+            //     message: "✅ Pipeline SUCESSO: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            // )
+        }
+        
+        failure {
+            echo '═══════════════════════════════════════════════════════════════'
+            echo '❌ PIPELINE FALHOU!'
+            echo '═══════════════════════════════════════════════════════════════'
+            echo 'Verifique os logs acima para identificar o problema.'
+            
+            // Em caso de falha, derruba o ambiente staging
+            script {
+                sh "docker compose -f ${STAGING_COMPOSE_FILE} down --remove-orphans || true"
+            }
+            
+            // Notificação de falha (exemplo com Slack - descomente se usar)
+            // slackSend(
+            //     color: 'danger',
+            //     message: "❌ Pipeline FALHOU: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+            // )
+        }
+        
+        unstable {
+            echo '═══════════════════════════════════════════════════════════════'
+            echo '⚠️ PIPELINE INSTÁVEL!'
+            echo '═══════════════════════════════════════════════════════════════'
+            echo 'Alguns testes ou verificações não passaram completamente.'
+        }
+        
+        aborted {
+            echo '═══════════════════════════════════════════════════════════════'
+            echo '🛑 PIPELINE ABORTADO!'
+            echo '═══════════════════════════════════════════════════════════════'
+            
+            // Limpa ambiente em caso de abort
+            script {
+                sh "docker compose -f ${STAGING_COMPOSE_FILE} down --remove-orphans || true"
+            }
+        }
+    }
+}
+
+

@@ -7,10 +7,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO para transferência de dados do Student.
- * Isola a camada de apresentação do domínio (SOLID - Dependency Inversion)
+ * Data Transfer Object para transferência de dados do Student.
  * 
- * Rickelme
+ * <h2>Clean Architecture - Application Layer:</h2>
+ * <ul>
+ *   <li><b>Isolamento</b>: Separa camada de apresentação do domínio</li>
+ *   <li><b>Dependency Inversion</b>: Controllers dependem de DTOs, não de Entities</li>
+ *   <li><b>Mapper Pattern</b>: Métodos fromEntity() e toEntity()</li>
+ * </ul>
+ * 
+ * <h2>Anotações:</h2>
+ * <ul>
+ *   <li>@Schema - Documentação OpenAPI/Swagger</li>
+ *   <li>@Data - Lombok: getters, setters, equals, hashCode, toString</li>
+ * </ul>
+ * 
+ * @author Rickelme
+ * @see Student Entidade de domínio correspondente
  */
 @Data
 @NoArgsConstructor

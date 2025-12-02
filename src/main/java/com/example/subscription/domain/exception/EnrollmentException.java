@@ -1,11 +1,30 @@
-
 package com.example.subscription.domain.exception;
 
 /**
  * Exceção específica para problemas de matrícula/inscrição.
- * Exemplo de uso: curso lotado, pré-requisitos não cumpridos, etc.
  * 
- * Guilherme
+ * <h2>DDD - Domain Exception:</h2>
+ * <ul>
+ *   <li><b>Herança</b>: Estende BusinessException (especialização)</li>
+ *   <li><b>Códigos Predefinidos</b>: Constantes para erros comuns</li>
+ *   <li><b>Extensibilidade</b>: Fácil adicionar novos códigos de erro</li>
+ * </ul>
+ * 
+ * <h2>Códigos de Erro Disponíveis:</h2>
+ * <ul>
+ *   <li>{@link #COURSE_FULL} - Curso lotado</li>
+ *   <li>{@link #PREREQUISITE_NOT_MET} - Pré-requisito não cumprido</li>
+ *   <li>{@link #ALREADY_ENROLLED} - Já matriculado</li>
+ *   <li>{@link #INSUFFICIENT_CREDITS} - Créditos insuficientes</li>
+ * </ul>
+ * 
+ * <h2>Uso:</h2>
+ * <pre>{@code
+ * throw new EnrollmentException(EnrollmentException.COURSE_FULL, "Curso Java já está lotado");
+ * }</pre>
+ * 
+ * @author Guilherme
+ * @see BusinessException Classe pai
  */
 public class EnrollmentException extends BusinessException {
     

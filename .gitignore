@@ -65,4 +65,5 @@ buildNumber.properties
 .history
 .ionide
 
+/explaning
 # End of https://www.toptal.com/developers/gitignore/api/java,maven,visualstudiocode

@@ -13,7 +13,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Controller REST para funcionalidades de Gamificação
+ * Controller REST para funcionalidades de Gamificação.
+ * 
+ * <h2>Clean Architecture - Presentation Layer:</h2>
+ * <ul>
+ *   <li><b>Thin Controller</b>: Delega processamento para GamificationService</li>
+ *   <li><b>Validação</b>: Usa @Valid para validar DTOs automaticamente</li>
+ *   <li><b>REST API</b>: Endpoint POST para ação de completar curso</li>
+ * </ul>
+ * 
+ * <h2>Endpoint:</h2>
+ * <ul>
+ *   <li>POST /gamification/students/{id}/complete-course - Completa curso e aplica gamificação</li>
+ * </ul>
+ * 
+ * <h2>Fluxo de Dados:</h2>
+ * <pre>
+ * HTTP Request → Controller → Service → Domain → Repository → Database
+ *                    ↓
+ *              Validation (@Valid)
+ * </pre>
+ * 
+ * @author Guilherme
+ * @see GamificationService Service que processa a gamificação
+ * @see CourseCompletionRequestDTO DTO de entrada validado
  */
 @RestController
 @RequestMapping("/gamification")

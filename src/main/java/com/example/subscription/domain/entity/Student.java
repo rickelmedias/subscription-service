@@ -9,15 +9,27 @@ import lombok.*;
 /**
  * Entidade Student - Aggregate Root do domínio.
  * 
- * Princípios DDD aplicados:
- * - Entity com identidade única (ID)
- * - Aggregate Root (controla acesso aos Value Objects)
- * - Rich Domain Model (contém lógica de negócio)
- * - Encapsulamento (setters protegidos, lógica via métodos de negócio)
+ * <h2>Princípios DDD aplicados:</h2>
+ * <ul>
+ *   <li><b>Entity</b>: Possui identidade única (ID)</li>
+ *   <li><b>Aggregate Root</b>: Controla acesso aos Value Objects (Credits, CourseAverage)</li>
+ *   <li><b>Rich Domain Model</b>: Contém lógica de negócio (não é anêmico)</li>
+ *   <li><b>Encapsulamento</b>: Setters protegidos, lógica via métodos de negócio</li>
+ * </ul>
  * 
- * Princípios SOLID aplicados:
- * - Single Responsibility: Gerencia dados e comportamento do estudante
- * - Open/Closed: Extensível via Strategy (cálculo de créditos)
+ * <h2>Princípios SOLID aplicados:</h2>
+ * <ul>
+ *   <li><b>Single Responsibility</b>: Gerencia dados e comportamento do estudante</li>
+ *   <li><b>Open/Closed</b>: Extensível via Strategy (cálculo de créditos)</li>
+ * </ul>
+ * 
+ * <h2>Clean Architecture:</h2>
+ * <p>Esta classe pertence à camada de <b>Domain</b>, sendo independente de frameworks
+ * e infraestrutura. A única dependência externa (JPA) é para persistência.</p>
+ * 
+ * @author Rickelme
+ * @see Credits Value Object para créditos
+ * @see CourseAverage Value Object para média de cursos
  */
 @Entity
 @Table(name = "tb_student")

@@ -12,14 +12,29 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.NoSuchElementException;
 
 /**
- * Serviço de Gamificação.
+ * Application Service para Gamificação de Estudantes.
  * 
- * Responsabilidades:
- * - Aplicar regras de gamificação
- * - Coordenar entre Repository e Domain
- * - Gerenciar transações
+ * <h2>Clean Architecture - Application Layer:</h2>
+ * <ul>
+ *   <li><b>Use Case</b>: Implementa o caso de uso "Completar Curso"</li>
+ *   <li><b>Coordenação</b>: Orquestra Repository + Domain Entity</li>
+ *   <li><b>Validação</b>: Delega para Value Objects (fail-fast)</li>
+ *   <li><b>Transaction</b>: Gerencia transações com @Transactional</li>
+ * </ul>
  * 
- * Guilherme
+ * <h2>Fluxo de Execução:</h2>
+ * <ol>
+ *   <li>Recebe DTO com média do curso</li>
+ *   <li>Cria Value Object CourseAverage (valida automaticamente)</li>
+ *   <li>Busca Student no Repository</li>
+ *   <li>Invoca lógica de domínio: student.completeCourse()</li>
+ *   <li>JPA persiste automaticamente (dirty checking)</li>
+ *   <li>Retorna DTO com dados atualizados</li>
+ * </ol>
+ * 
+ * @author Guilherme
+ * @see Student#completeCourse(CourseAverage)
+ * @see CourseAverage Value Object com validação
  */
 @Service
 public class GamificationService {
