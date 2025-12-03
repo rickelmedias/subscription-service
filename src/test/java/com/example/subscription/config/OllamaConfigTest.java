@@ -1,6 +1,7 @@
 package com.example.subscription.config;
 
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -19,14 +21,15 @@ import static org.assertj.core.api.Assertions.*;
  * 
  * <h2>Cenários testados:</h2>
  * <ul>
- *   <li>Criação do bean ChatLanguageModel</li>
- *   <li>Configuração padrão via application.properties</li>
+ *   <li>Criação do bean ChatLanguageModel (mock em test profile)</li>
+ *   <li>Criação do bean OllamaChatModel (quando habilitado)</li>
+ *   <li>Configuração condicional via application.properties</li>
  *   <li>Validação da anotação @Configuration</li>
  * </ul>
  * 
  * <h2>Nota:</h2>
- * <p>Os testes não dependem do Ollama estar rodando pois apenas verificam
- * se o bean é criado corretamente com as configurações especificadas.</p>
+ * <p>Em ambiente de teste (ollama.enabled=false), o mock é usado
+ * em vez do Ollama real.</p>
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -55,34 +58,72 @@ class OllamaConfigTest {
     }
 
     @Nested
-    @DisplayName("ChatLanguageModel Bean")
-    class ChatLanguageModelBean {
+    @DisplayName("Mock ChatLanguageModel Bean (Test Profile)")
+    class MockChatLanguageModelBean {
 
         @Test
-        @DisplayName("Should create ChatLanguageModel bean")
-        void shouldCreateChatLanguageModelBean() {
-            ChatLanguageModel model = ollamaConfig.chatLanguageModel();
+        @DisplayName("Should create mock ChatLanguageModel bean when ollama.enabled=false")
+        void shouldCreateMockChatLanguageModelBean() {
+            // Em test profile, ollama.enabled=false, então usa mock
+            ChatLanguageModel model = ollamaConfig.mockChatLanguageModel();
             
             assertThat(model).isNotNull();
         }
 
         @Test
-        @DisplayName("Should create OllamaChatModel instance")
-        void shouldCreateOllamaChatModelInstance() {
-            ChatLanguageModel model = ollamaConfig.chatLanguageModel();
+        @DisplayName("Mock should return warning message")
+        void mockShouldReturnWarningMessage() {
+            ChatLanguageModel model = ollamaConfig.mockChatLanguageModel();
             
-            // Verifica que é uma instância de ChatLanguageModel (interface)
-            assertThat(model).isInstanceOf(ChatLanguageModel.class);
+            // O mock retorna uma mensagem de aviso
+            String response = model.generate("test");
+            assertThat(response)
+                .contains("Serviço de IA não disponível");
+        }
+    }
+
+    @Nested
+    @DisplayName("Ollama ChatLanguageModel Bean (when enabled)")
+    class OllamaChatLanguageModelBean {
+
+        @Test
+        @DisplayName("Should create OllamaChatModel when ollamaChatLanguageModel is called")
+        void shouldCreateOllamaChatModelWhenCalled() {
+            // Criar uma nova instância para testar o método diretamente
+            OllamaConfig config = new OllamaConfig();
+            
+            // Configurar os campos via reflection
+            ReflectionTestUtils.setField(config, "baseUrl", "http://localhost:11434");
+            ReflectionTestUtils.setField(config, "modelName", "test-model");
+            ReflectionTestUtils.setField(config, "timeoutSeconds", 30);
+            ReflectionTestUtils.setField(config, "temperature", 0.5);
+            
+            // When
+            ChatLanguageModel model = config.ollamaChatLanguageModel();
+            
+            // Then
+            assertThat(model).isNotNull();
+            assertThat(model).isInstanceOf(OllamaChatModel.class);
         }
 
         @Test
-        @DisplayName("Should create model with configured properties")
-        void shouldCreateModelWithConfiguredProperties() {
-            // O bean deve ser criado sem exceções mesmo em ambiente de teste
-            ChatLanguageModel model = ollamaConfig.chatLanguageModel();
+        @DisplayName("Should configure model with provided values")
+        void shouldConfigureModelWithProvidedValues() {
+            // Criar uma nova instância para testar o método diretamente
+            OllamaConfig config = new OllamaConfig();
             
-            // Verifica que o modelo foi criado (configurações são aplicadas internamente)
+            // Configurar os campos via reflection
+            ReflectionTestUtils.setField(config, "baseUrl", "http://custom-url:11434");
+            ReflectionTestUtils.setField(config, "modelName", "llama3:8b");
+            ReflectionTestUtils.setField(config, "timeoutSeconds", 60);
+            ReflectionTestUtils.setField(config, "temperature", 0.8);
+            
+            // When
+            ChatLanguageModel model = config.ollamaChatLanguageModel();
+            
+            // Then
             assertThat(model).isNotNull();
+            // O modelo é criado sem erros com as configurações fornecidas
             assertThat(model.toString()).isNotBlank();
         }
     }
@@ -101,11 +142,15 @@ class OllamaConfigTest {
         }
 
         @Test
-        @DisplayName("Should return same bean on multiple calls")
-        void shouldReturnSameBeanOnMultipleCalls() {
-            // Beans são singleton por padrão
-            assertThat(chatLanguageModel).isSameAs(chatLanguageModel);
+        @DisplayName("Should be mock instance in test profile")
+        void shouldBeMockInstanceInTestProfile() {
+            // Verifica que é uma instância de ChatLanguageModel
+            assertThat(chatLanguageModel).isInstanceOf(ChatLanguageModel.class);
+            
+            // E que retorna a mensagem de mock
+            String response = chatLanguageModel.generate("test");
+            assertThat(response)
+                .contains("Serviço de IA não disponível");
         }
     }
 }
-
