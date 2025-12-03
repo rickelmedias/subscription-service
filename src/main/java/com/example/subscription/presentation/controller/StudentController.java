@@ -13,7 +13,23 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Controller REST para gerenciamento de Estudantes
+ * Controller REST para gerenciamento de Estudantes.
+ * 
+ * <h2>Clean Architecture - Presentation Layer:</h2>
+ * <ul>
+ *   <li><b>Thin Controller</b>: Apenas roteia requisições para o Service</li>
+ *   <li><b>REST API</b>: Endpoints seguem padrões RESTful</li>
+ *   <li><b>Documentação</b>: Swagger/OpenAPI annotations</li>
+ * </ul>
+ * 
+ * <h2>Endpoints:</h2>
+ * <ul>
+ *   <li>GET /students - Lista todos os estudantes</li>
+ *   <li>GET /students/{id} - Busca estudante por ID</li>
+ * </ul>
+ * 
+ * @author Rickelme
+ * @see StudentService Service layer que processa a lógica
  */
 @RestController
 @CrossOrigin
@@ -45,5 +61,16 @@ public class StudentController {
     public ResponseEntity<StudentDTO> getStudentById(@PathVariable Long id) {
         StudentDTO student = studentService.getStudentById(id);
         return ResponseEntity.ok(student);
+    }
+
+    @PostMapping
+    @Operation(summary = "Criar estudante", description = "Cria um novo estudante")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Estudante criado com sucesso"),
+        @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    })
+    public ResponseEntity<StudentDTO> createStudent(@RequestBody StudentDTO dto) {
+        StudentDTO created = studentService.createStudent(dto);
+        return ResponseEntity.status(201).body(created);
     }
 }

@@ -12,7 +12,26 @@ import java.util.Objects;
 
 /**
  * Value Object que representa a média de um curso.
- * Encapsula validações e comportamentos relacionados à média.
+ * 
+ * <h2>Princípios DDD - Value Object:</h2>
+ * <ul>
+ *   <li><b>Imutabilidade</b>: Valor definido na criação, não muda</li>
+ *   <li><b>Auto-validação</b>: Valida intervalo [0.0, 10.0]</li>
+ *   <li><b>Comportamento Rico</b>: isAbove(), isBelow(), getPerformanceLevel()</li>
+ *   <li><b>Comparable</b>: Permite ordenação e comparação</li>
+ * </ul>
+ * 
+ * <h2>Classificação de Performance:</h2>
+ * <ul>
+ *   <li>EXCELLENT: >= 9.0</li>
+ *   <li>VERY_GOOD: >= 8.0 e < 9.0</li>
+ *   <li>GOOD: > 7.0 e < 8.0</li>
+ *   <li>AVERAGE: >= 6.0 e <= 7.0</li>
+ *   <li>BELOW_AVERAGE: < 6.0</li>
+ * </ul>
+ * 
+ * @author Guilherme
+ * @see Student#completeCourse(CourseAverage)
  */
 @Embeddable
 @Getter

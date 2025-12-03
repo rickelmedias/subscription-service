@@ -3,6 +3,8 @@ package com.example.subscription.application.service;
 import com.example.subscription.application.dto.CourseCompletionRequestDTO;
 import com.example.subscription.application.dto.StudentDTO;
 import com.example.subscription.domain.entity.Student;
+import com.example.subscription.domain.event.CourseCompletedEvent;
+import com.example.subscription.infrastructure.messaging.GamificationEventPublisher;
 import com.example.subscription.infrastructure.repository.StudentRepository;
 
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +24,12 @@ import static org.mockito.Mockito.*;
 /**
  * Teste UNITÁRIO de Service usando Mocks
  * Rápido, sem banco de dados, isolado
+ * 
+ * <h2>Mocks utilizados:</h2>
+ * <ul>
+ *   <li><b>StudentRepository</b>: Isola da persistência</li>
+ *   <li><b>GamificationEventPublisher</b>: Isola do RabbitMQ</li>
+ * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("Gamification Service Unit Tests")
@@ -29,6 +37,9 @@ class GamificationServiceTest {
 
     @Mock
     private StudentRepository repository;
+
+    @Mock
+    private GamificationEventPublisher eventPublisher;
 
     @InjectMocks
     private GamificationService service;
@@ -164,5 +175,47 @@ class GamificationServiceTest {
         assertThat(student.getCompletedCourses()).isEqualTo(3);
         assertThat(student.getCredits()).isEqualTo(9); // 3 cursos × 3 créditos
         verify(repository, times(3)).findById(1L);
+    }
+
+    @Test
+    @DisplayName("Should publish event to RabbitMQ when course is completed")
+    void shouldPublishEventWhenCourseCompleted() {
+        // Given
+        Student student = new Student("Eva", 0);
+        when(repository.findById(1L)).thenReturn(Optional.of(student));
+        
+        CourseCompletionRequestDTO request = new CourseCompletionRequestDTO();
+        request.setAverage(8.0);
+        
+        // When
+        service.completeCourse(1L, request);
+        
+        // Then - Verifica que o evento foi publicado
+        verify(eventPublisher, times(1)).publishCourseCompleted(any(CourseCompletedEvent.class));
+    }
+
+    @Test
+    @DisplayName("Should publish event with correct data")
+    void shouldPublishEventWithCorrectData() {
+        // Given
+        Student student = new Student("Frank", 5);
+        student.setId(42L);
+        when(repository.findById(42L)).thenReturn(Optional.of(student));
+        
+        CourseCompletionRequestDTO request = new CourseCompletionRequestDTO();
+        request.setAverage(9.5);
+        
+        // When
+        service.completeCourse(42L, request);
+        
+        // Then - Captura o argumento passado ao publisher
+        var captor = org.mockito.ArgumentCaptor.forClass(CourseCompletedEvent.class);
+        verify(eventPublisher).publishCourseCompleted(captor.capture());
+        
+        CourseCompletedEvent capturedEvent = captor.getValue();
+        assertThat(capturedEvent.studentId()).isEqualTo(42L);
+        assertThat(capturedEvent.studentName()).isEqualTo("Frank");
+        assertThat(capturedEvent.courseAverage()).isEqualTo(9.5);
+        assertThat(capturedEvent.passed()).isTrue(); // 9.5 > 7.0
     }
 }

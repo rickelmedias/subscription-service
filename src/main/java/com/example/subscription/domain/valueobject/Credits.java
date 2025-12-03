@@ -10,13 +10,29 @@ import java.io.Serializable;
 
 /**
  * Value Object que representa créditos do estudante.
- * Princípios DDD:
- * - Imutável (novos valores geram novos objetos)
- * - Auto-validável
- * - Sem identidade própria
- * - Embeddable no JPA
  * 
- * Guilherme
+ * <h2>Princípios DDD - Value Object:</h2>
+ * <ul>
+ *   <li><b>Imutabilidade</b>: Operações retornam novos objetos</li>
+ *   <li><b>Auto-validação</b>: Valida no construtor (fail-fast)</li>
+ *   <li><b>Sem identidade</b>: Igualdade baseada em valor, não em ID</li>
+ *   <li><b>Embeddable</b>: Persistido junto com a Entity (Student)</li>
+ * </ul>
+ * 
+ * <h2>Factory Methods:</h2>
+ * <ul>
+ *   <li>{@link #of(int)} - Cria créditos com valor específico</li>
+ *   <li>{@link #zero()} - Cria créditos zerados</li>
+ * </ul>
+ * 
+ * <h2>Operações (retornam novos objetos):</h2>
+ * <ul>
+ *   <li>{@link #add(int)} - Adiciona créditos</li>
+ *   <li>{@link #subtract(int)} - Remove créditos (com validação)</li>
+ * </ul>
+ * 
+ * @author Guilherme
+ * @see Student Entidade que usa este Value Object
  */
 @Embeddable
 @Getter

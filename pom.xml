@@ -26,6 +26,7 @@
         <jacoco.version>0.8.11</jacoco.version>
         <springdoc.version>2.6.0</springdoc.version>
         <pmd.version>3.21.2</pmd.version>
+        <langchain4j.version>0.35.0</langchain4j.version>
     </properties>
 
     <dependencies>
@@ -111,6 +112,35 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- ===============================
+             RABBITMQ - Message Broker (Event-Driven Architecture)
+             =============================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- ===============================
+             LANGCHAIN4J - AI/LLM Integration (Ollama Local)
+             =============================== -->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -140,13 +170,35 @@
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
                 <configuration>
+                    <!-- 
+                        EXCLUSÕES DE COBERTURA JACOCO
+                        ============================
+                        
+                        Exclusões JUSTIFICADAS (apenas bootstrapping Spring Boot):
+                        - SubscriptionApplication: classe main() de bootstrapping Spring Boot
+                          (padrão aceito na indústria - não há lógica de negócio)
+                        
+                        REMOVIDAS (agora possuem testes adequados):
+                        - config/** → OllamaConfigTest (@Rickelme), RabbitMQConfigTest (@Guilherme),
+                                      OpenApiConfigTest
+                        - infrastructure/messaging/** → GamificationEventPublisherTest (@Rickelme),
+                                                        GamificationEventConsumerTest (@Guilherme)
+                        - dto/** → StudentDTOTest, CourseCompletionRequestDTOTest
+                        - GlobalExceptionHandler → GlobalExceptionHandlerTest (@Rickelme)
+                        - RecommendationController → RecommendationControllerTest (@Guilherme)
+                        - StudentController → StudentControllerTest
+                        - CourseRecommendationService → CourseRecommendationServiceTest (@Rickelme)
+                        - StudentService → StudentServiceTest
+                        - CreditStrategyFactory$StrategyType → CreditStrategyFactoryTest
+                        - domain/event/** → CourseCompletedEventTest (@Guilherme)
+                        - CertificateHash → CertificateHashTest (@Rickelme, @Guilherme)
+                        
+                        NOTA SOBRE BDD:
+                        - bdd/** NÃO é excluído porque não é código de produção (está em src/test)
+                    -->
                     <excludes>
+                        <!-- Classe de bootstrapping Spring Boot - não testável -->
                         <exclude>**/SubscriptionApplication.class</exclude>
-                        <exclude>**/config/**</exclude>
-                        <exclude>**/dto/**</exclude>
-                        <exclude>**/bdd/**</exclude>
-                        <exclude>**/presentation/controller/GlobalExceptionHandler.class</exclude>
-                        <exclude>**/domain/strategy/CreditStrategyFactory$StrategyType.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

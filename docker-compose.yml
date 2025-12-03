@@ -13,6 +13,15 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - JAVA_OPTS=-Xms256m -Xmx512m
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=guest
+      - SPRING_RABBITMQ_PASSWORD=guest
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     networks:
       - subscription-network
     restart: unless-stopped
@@ -44,10 +53,33 @@ services:
       timeout: 5s
       retries: 5
 
+  # RabbitMQ (Message Broker - Event-Driven Architecture)
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: subscription-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"    # AMQP protocol
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - subscription-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 networks:
   subscription-network:
     driver: bridge
 
 volumes:
   postgres-data:
+    driver: local
+  rabbitmq-data:
     driver: local

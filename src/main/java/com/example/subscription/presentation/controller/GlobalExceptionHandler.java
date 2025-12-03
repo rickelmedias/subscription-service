@@ -13,8 +13,35 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
- * Handler global de exceções.
- * Garante respostas HTTP consistentes e bem formatadas.
+ * Handler global de exceções da aplicação.
+ * 
+ * <h2>Clean Architecture - Presentation Layer:</h2>
+ * <ul>
+ *   <li><b>@RestControllerAdvice</b>: Intercepta exceções de todos os controllers</li>
+ *   <li><b>Consistência</b>: Formato de erro padronizado para toda API</li>
+ *   <li><b>Mapeamento</b>: Converte exceções Java em HTTP Status apropriados</li>
+ * </ul>
+ * 
+ * <h2>Mapeamento de Exceções:</h2>
+ * <table border="1">
+ *   <tr><th>Exceção</th><th>HTTP Status</th></tr>
+ *   <tr><td>IllegalArgumentException</td><td>400 Bad Request</td></tr>
+ *   <tr><td>NoSuchElementException</td><td>404 Not Found</td></tr>
+ *   <tr><td>MethodArgumentNotValidException</td><td>400 Validation Error</td></tr>
+ *   <tr><td>Exception (genérica)</td><td>500 Internal Server Error</td></tr>
+ * </table>
+ * 
+ * <h2>Formato de Resposta:</h2>
+ * <pre>{@code
+ * {
+ *   "timestamp": "2024-01-15T10:30:00",
+ *   "status": 400,
+ *   "error": "Bad Request",
+ *   "message": "Average must be between 0.0 and 10.0"
+ * }
+ * }</pre>
+ * 
+ * @author Guilherme
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {

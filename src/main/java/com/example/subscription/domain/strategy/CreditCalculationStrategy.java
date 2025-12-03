@@ -3,16 +3,30 @@ package com.example.subscription.domain.strategy;
 import com.example.subscription.domain.valueobject.CourseAverage;
 
 /**
- * Strategy Pattern para cálculo de créditos.
+ * Interface Strategy para cálculo de créditos.
  * 
- * Princípios SOLID aplicados:
- * - Single Responsibility: Cada estratégia calcula créditos de uma forma
- * - Open/Closed: Aberto para extensão (novas estratégias), fechado para modificação
- * - Liskov Substitution: Qualquer estratégia pode substituir outra
- * - Interface Segregation: Interface mínima e focada
- * - Dependency Inversion: Dependemos da abstração, não da implementação
+ * <h2>Design Pattern - Strategy:</h2>
+ * <p>Define uma família de algoritmos de cálculo de créditos, encapsula cada um
+ * e os torna intercambiáveis. Permite que o algoritmo varie independentemente
+ * dos clientes que o utilizam.</p>
  * 
- * Guilherme
+ * <h2>Princípios SOLID aplicados:</h2>
+ * <ul>
+ *   <li><b>S</b> - Single Responsibility: Cada estratégia calcula créditos de uma forma</li>
+ *   <li><b>O</b> - Open/Closed: Aberto para extensão, fechado para modificação</li>
+ *   <li><b>L</b> - Liskov Substitution: Qualquer estratégia pode substituir outra</li>
+ *   <li><b>I</b> - Interface Segregation: Interface mínima e focada</li>
+ *   <li><b>D</b> - Dependency Inversion: Clientes dependem desta abstração</li>
+ * </ul>
+ * 
+ * <h2>Implementações disponíveis:</h2>
+ * <ul>
+ *   <li>{@link StandardCreditStrategy} - Regra padrão: 3 créditos se média > 7.0</li>
+ *   <li>{@link PremiumCreditStrategy} - Regra escalonada por faixa de nota</li>
+ * </ul>
+ * 
+ * @author Guilherme
+ * @see CreditStrategyFactory Factory para criar estratégias
  */
 public interface CreditCalculationStrategy {
     

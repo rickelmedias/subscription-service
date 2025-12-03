@@ -9,9 +9,24 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO para requisição de conclusão de curso
+ * DTO para requisição de conclusão de curso.
  * 
- * Guilherme
+ * <h2>Clean Architecture - Application Layer:</h2>
+ * <ul>
+ *   <li><b>Request DTO</b>: Dados de entrada da API</li>
+ *   <li><b>Validação</b>: Bean Validation com anotações</li>
+ *   <li><b>Documentação</b>: OpenAPI/Swagger Schema</li>
+ * </ul>
+ * 
+ * <h2>Validações:</h2>
+ * <ul>
+ *   <li>@NotNull - Campo obrigatório</li>
+ *   <li>@DecimalMin(0.0) - Mínimo permitido</li>
+ *   <li>@DecimalMax(10.0) - Máximo permitido</li>
+ * </ul>
+ * 
+ * @author Guilherme
+ * @see com.example.subscription.domain.valueobject.CourseAverage Validação adicional no domínio
  */
 @Data
 @NoArgsConstructor

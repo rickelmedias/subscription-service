@@ -17,6 +17,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -91,5 +93,31 @@ class StudentServiceTest {
         assertThatThrownBy(() -> studentService.getStudentById(studentId))
             .isInstanceOf(NoSuchElementException.class)
             .hasMessageContaining("Student not found: " + studentId);
+    }
+    
+    /**
+     * Teste para o método createStudent.
+     * @author Rickelme
+     */
+    @Test
+    @DisplayName("Should create a new student and return DTO")
+    void whenCreateStudent_shouldReturnCreatedStudentDTO() {
+        // Arrange
+        StudentDTO inputDto = new StudentDTO(null, "Novo Aluno", 0, 0);
+        Student savedStudent = new Student("Novo Aluno");
+        savedStudent.setId(10L);
+        
+        when(studentRepository.save(any(Student.class))).thenReturn(savedStudent);
+
+        // Act
+        StudentDTO result = studentService.createStudent(inputDto);
+
+        // Assert
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(10L);
+        assertThat(result.getName()).isEqualTo("Novo Aluno");
+        assertThat(result.getCompletedCourses()).isEqualTo(0);
+        assertThat(result.getCredits()).isEqualTo(0);
+        verify(studentRepository).save(any(Student.class));
     }
 }
